@@ -21,6 +21,7 @@ import { Markdown } from "@tiptap/markdown";
 import type { AnyExtension } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { common, createLowlight } from "lowlight";
+import { Marked } from "marked";
 import { MentionNode, Variable } from "./nodes";
 
 export const lowlight = createLowlight(common);
@@ -68,6 +69,11 @@ export function schemaExtensions(
 		Youtube.configure({ nocookie: true, width: 640, height: 360 }),
 		overrides.variable ?? Variable,
 		overrides.mention ?? MentionNode,
-		Markdown.configure({ indentation: { style: "space", size: 2 } }),
+		// A fresh Marked per editor: @tiptap/markdown registers its tokenizers on the
+		// instance it is given, so the global `marked` would pile them up on every remount.
+		Markdown.configure({
+			marked: new Marked() as unknown as typeof import("marked").marked,
+			indentation: { style: "space", size: 2 },
+		}),
 	];
 }
