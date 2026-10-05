@@ -27,8 +27,13 @@ import {
 } from "platejs";
 import type { PlateEditor } from "platejs/react";
 
+const ACTION_TWO_COLUMNS = "action_two_columns";
 const ACTION_THREE_COLUMNS = "action_three_columns";
+const ACTION_FOUR_COLUMNS = "action_four_columns";
 const ACTION_FOOTNOTE = "action_footnote";
+// POC: 2/4 columns and an emoji action so every included tool is reachable
+// from the slash menu and the insert dropdown.
+const ACTION_EMOJI = "action_emoji";
 
 const insertList = (editor: PlateEditor, type: string) => {
 	editor.tf.insertNodes(
@@ -60,8 +65,12 @@ const insertBlockMap: Record<
 	[KEYS.listTodo]: insertList,
 	[KEYS.ol]: insertList,
 	[KEYS.ul]: insertList,
+	[ACTION_TWO_COLUMNS]: (editor) =>
+		insertColumnGroup(editor, { columns: 2, select: true }),
 	[ACTION_THREE_COLUMNS]: (editor) =>
 		insertColumnGroup(editor, { columns: 3, select: true }),
+	[ACTION_FOUR_COLUMNS]: (editor) =>
+		insertColumnGroup(editor, { columns: 4, select: true }),
 	[KEYS.audio]: (editor) => insertAudioPlaceholder(editor, { select: true }),
 	[KEYS.callout]: (editor) => insertCallout(editor, { select: true }),
 	[KEYS.codeBlock]: (editor) => insertCodeBlock(editor, { select: true }),
@@ -92,6 +101,11 @@ const insertInlineMap: Record<
 > = {
 	[KEYS.date]: (editor) => insertDate(editor, { select: true }),
 	[ACTION_FOOTNOTE]: (editor) => insertFootnote(editor, { select: true }),
+	[ACTION_EMOJI]: (editor) =>
+		editor.tf.insertNodes(
+			{ type: KEYS.emojiInput, children: [{ text: "" }] },
+			{ select: true },
+		),
 	[KEYS.inlineEquation]: (editor) =>
 		insertInlineEquation(editor, "", { select: true }),
 	[KEYS.link]: (editor) => triggerFloatingLink(editor, { focused: true }),
@@ -187,6 +201,7 @@ const setBlockMap: Record<
 	[KEYS.listTodo]: setList,
 	[KEYS.ol]: setList,
 	[KEYS.ul]: setList,
+	[ACTION_TWO_COLUMNS]: (editor) => toggleColumnGroup(editor, { columns: 2 }),
 	[ACTION_THREE_COLUMNS]: (editor) => toggleColumnGroup(editor, { columns: 3 }),
 	[KEYS.codeBlock]: (editor) => toggleCodeBlock(editor),
 };

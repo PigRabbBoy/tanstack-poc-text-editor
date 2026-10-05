@@ -147,9 +147,15 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
     await downloadFile(url, 'plate.md');
   };
 
-  // POC: "Export as Word" (@platejs/docx-io) is removed — its dependency
-  // html-to-vdom → htmlparser2@3 does `require("../")`, which Vite 8's rolldown
-  // dep optimizer cannot resolve, crashing the dev server (SSR env included).
+  // POC: @platejs/docx-io is loaded on click (see src/editors/plate/docx-io.ts);
+  // its html-to-vdom → htmlparser2@3 is aliased to htmlparser2@9 in vite.config.ts.
+  const exportToWord = async () => {
+    const { valueToDocx } = await import('@/editors/plate/docx-io');
+    const blob = await valueToDocx(editor.children);
+    const url = URL.createObjectURL(blob);
+    await downloadFile(url, 'plate.docx');
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
@@ -172,6 +178,9 @@ export function ExportToolbarButton(props: DropdownMenuProps) {
           </DropdownMenuItem>
           <DropdownMenuItem onSelect={exportToMarkdown}>
             Export as Markdown
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={exportToWord}>
+            Export as Word
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

@@ -5,16 +5,8 @@ import * as React from 'react';
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
 import {
-  AudioLinesIcon,
   CalendarIcon,
-  CodeXmlIcon,
-  Columns2Icon,
-  Columns4Icon,
-  FileUpIcon,
-  LightbulbIcon,
-  SmileIcon,
   ChevronRightIcon,
-  Code2,
   Columns3Icon,
   FileCodeIcon,
   FilmIcon,
@@ -26,7 +18,6 @@ import {
   ListIcon,
   ListOrderedIcon,
   MinusIcon,
-  PenToolIcon,
   PilcrowIcon,
   PlusIcon,
   QuoteIcon,
@@ -37,7 +28,7 @@ import {
   TableOfContentsIcon,
 } from 'lucide-react';
 import { KEYS } from 'platejs';
-import { type PlateEditor, useEditorRef } from 'platejs/react';
+import { useEditorRef } from 'platejs/react';
 
 import {
   DropdownMenu,
@@ -48,7 +39,7 @@ import {
 import {
   insertBlock,
   insertInlineElement,
-} from '@/editors/plate/components/editor/transforms';
+} from '@/editors/plate/components/editor/transforms-classic';
 
 import { ToolbarButton, ToolbarMenuGroup } from './toolbar';
 
@@ -60,7 +51,7 @@ type Group = {
 type Item = {
   icon: React.ReactNode;
   value: string;
-  onSelect: (editor: PlateEditor, value: string) => void;
+  onSelect: (editor: any, value: string) => void;
   focusEditor?: boolean;
   label?: string;
 };
@@ -109,11 +100,6 @@ const groups: Group[] = [
         label: 'Divider',
         value: KEYS.hr,
       },
-      {
-        icon: <LightbulbIcon />,
-        label: 'Callout',
-        value: KEYS.callout,
-      },
     ].map((item) => ({
       ...item,
       onSelect: (editor, value) => {
@@ -127,17 +113,17 @@ const groups: Group[] = [
       {
         icon: <ListIcon />,
         label: 'Bulleted list',
-        value: KEYS.ul,
+        value: KEYS.ulClassic,
       },
       {
         icon: <ListOrderedIcon />,
         label: 'Numbered list',
-        value: KEYS.ol,
+        value: KEYS.olClassic,
       },
       {
         icon: <SquareIcon />,
         label: 'To-do list',
-        value: KEYS.listTodo,
+        value: KEYS.taskList,
       },
       {
         icon: <ChevronRightIcon />,
@@ -161,21 +147,6 @@ const groups: Group[] = [
       },
       {
         icon: <FilmIcon />,
-        label: 'Video',
-        value: KEYS.video,
-      },
-      {
-        icon: <AudioLinesIcon />,
-        label: 'Audio',
-        value: KEYS.audio,
-      },
-      {
-        icon: <FileUpIcon />,
-        label: 'File',
-        value: KEYS.file,
-      },
-      {
-        icon: <CodeXmlIcon />,
         label: 'Embed',
         value: KEYS.mediaEmbed,
       },
@@ -195,35 +166,15 @@ const groups: Group[] = [
         value: KEYS.toc,
       },
       {
-        icon: <Columns2Icon />,
-        label: '2 columns',
-        value: 'action_two_columns',
-      },
-      {
         icon: <Columns3Icon />,
         label: '3 columns',
         value: 'action_three_columns',
-      },
-      {
-        icon: <Columns4Icon />,
-        label: '4 columns',
-        value: 'action_four_columns',
       },
       {
         focusEditor: false,
         icon: <RadicalIcon />,
         label: 'Equation',
         value: KEYS.equation,
-      },
-      {
-        icon: <PenToolIcon />,
-        label: 'Excalidraw',
-        value: KEYS.excalidraw,
-      },
-      {
-        icon: <Code2 />,
-        label: 'Code Drawing',
-        value: KEYS.codeDrawing,
       },
     ].map((item) => ({
       ...item,
@@ -239,11 +190,6 @@ const groups: Group[] = [
         icon: <Link2Icon />,
         label: 'Link',
         value: KEYS.link,
-      },
-      {
-        icon: <SmileIcon />,
-        label: 'Emoji',
-        value: 'action_emoji',
       },
       {
         focusEditor: true,

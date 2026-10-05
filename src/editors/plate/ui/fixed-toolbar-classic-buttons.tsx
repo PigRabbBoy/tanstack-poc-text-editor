@@ -1,7 +1,8 @@
 'use client';
 
+// POC: AI toolbar button removed (no LLM backend, ADR-0005).
+
 import {
-  ArrowUpToLineIcon,
   BaselineIcon,
   BoldIcon,
   Code2Icon,
@@ -17,23 +18,15 @@ import { useEditorReadOnly } from 'platejs/react';
 import { AlignToolbarButton } from './align-toolbar-button';
 import { CommentToolbarButton } from './comment-toolbar-button';
 import { EmojiToolbarButton } from './emoji-toolbar-button';
-import { ExportToolbarButton } from './export-toolbar-button';
 import { FontColorToolbarButton } from './font-color-toolbar-button';
-import { FontSizeToolbarButton } from './font-size-toolbar-button';
 import { RedoToolbarButton, UndoToolbarButton } from './history-toolbar-button';
-import { ImportToolbarButton } from './import-toolbar-button';
-import {
-  IndentToolbarButton,
-  OutdentToolbarButton,
-} from './indent-toolbar-button';
-import { InsertToolbarButton } from './insert-toolbar-button';
+import { InsertToolbarButton } from './insert-toolbar-classic-button';
 import { LineHeightToolbarButton } from './line-height-toolbar-button';
 import { LinkToolbarButton } from './link-toolbar-button';
 import {
-  BulletedListToolbarButton,
-  NumberedListToolbarButton,
-  TodoListToolbarButton,
-} from './list-toolbar-button';
+  IndentToolbarButton,
+  ListToolbarButton,
+} from './list-classic-toolbar-button';
 import { MarkToolbarButton } from './mark-toolbar-button';
 import { MediaToolbarButton } from './media-toolbar-button';
 import { ModeToolbarButton } from './mode-toolbar-button';
@@ -41,14 +34,7 @@ import { MoreToolbarButton } from './more-toolbar-button';
 import { TableToolbarButton } from './table-toolbar-button';
 import { ToggleToolbarButton } from './toggle-toolbar-button';
 import { ToolbarGroup } from './toolbar';
-import { TurnIntoToolbarButton } from './turn-into-toolbar-button';
-import { FindReplaceToolbarButton } from '@/editors/plate/toolbar/find-replace-toolbar-button';
-import {
-  FontFamilyToolbarButton,
-  FontWeightToolbarButton,
-} from '@/editors/plate/toolbar/font-toolbar-buttons';
-import { InlineEquationToolbarButton } from './equation-toolbar-button';
-import { SuggestionToolbarButton } from './suggestion-toolbar-button';
+import { TurnIntoToolbarButton } from './turn-into-toolbar-classic-button';
 
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
@@ -63,23 +49,8 @@ export function FixedToolbarButtons() {
           </ToolbarGroup>
 
           <ToolbarGroup>
-            <ExportToolbarButton>
-              <ArrowUpToLineIcon />
-            </ExportToolbarButton>
-
-            <ImportToolbarButton />
-          </ToolbarGroup>
-
-          <ToolbarGroup>
             <InsertToolbarButton />
             <TurnIntoToolbarButton />
-          </ToolbarGroup>
-
-          {/* POC: font family (BML fonts first) + weight — no registry buttons. */}
-          <ToolbarGroup>
-            <FontFamilyToolbarButton />
-            <FontWeightToolbarButton />
-            <FontSizeToolbarButton />
           </ToolbarGroup>
 
           <ToolbarGroup>
@@ -124,9 +95,9 @@ export function FixedToolbarButtons() {
           <ToolbarGroup>
             <AlignToolbarButton />
 
-            <NumberedListToolbarButton />
-            <BulletedListToolbarButton />
-            <TodoListToolbarButton />
+            <ListToolbarButton nodeType={KEYS.ulClassic} />
+            <ListToolbarButton nodeType={KEYS.olClassic} />
+            <ListToolbarButton nodeType={KEYS.taskList} />
             <ToggleToolbarButton />
           </ToolbarGroup>
 
@@ -134,7 +105,6 @@ export function FixedToolbarButtons() {
             <LinkToolbarButton />
             <TableToolbarButton />
             <EmojiToolbarButton />
-            <InlineEquationToolbarButton />
           </ToolbarGroup>
 
           <ToolbarGroup>
@@ -142,12 +112,11 @@ export function FixedToolbarButtons() {
             <MediaToolbarButton nodeType={KEYS.video} />
             <MediaToolbarButton nodeType={KEYS.audio} />
             <MediaToolbarButton nodeType={KEYS.file} />
-            <MediaToolbarButton nodeType={KEYS.mediaEmbed} />
           </ToolbarGroup>
 
           <ToolbarGroup>
             <LineHeightToolbarButton />
-            <OutdentToolbarButton />
+            <IndentToolbarButton reverse />
             <IndentToolbarButton />
           </ToolbarGroup>
 
@@ -164,8 +133,6 @@ export function FixedToolbarButtons() {
           <HighlighterIcon />
         </MarkToolbarButton>
         <CommentToolbarButton />
-        <SuggestionToolbarButton />
-        <FindReplaceToolbarButton />
       </ToolbarGroup>
 
       <ToolbarGroup>

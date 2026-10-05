@@ -1,10 +1,15 @@
-import { Sparkles } from "lucide-react";
+import { FlaskConical, Sparkles } from "lucide-react";
 import type { Descendant } from "platejs";
 import type { PlateEditor } from "platejs/react";
+import { lazy, Suspense, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { VersionHistory } from "./lab/version-history";
 import { meta } from "./meta";
 import { createVariableNode } from "./variable-base";
+
+const PlateLab = lazy(() => import("./lab/plate-lab"));
 
 const TODAY = "2026-10-05";
 
@@ -92,6 +97,29 @@ export function showcaseBlocks(): Descendant[] {
 	];
 }
 
+/** Single-purpose editors for tools that need a document of their own. */
+function LabSection() {
+	const [open, setOpen] = useState(false);
+	return (
+		<details
+			className="min-w-0 rounded-xl border bg-card p-4 text-sm"
+			data-testid="plate-lab"
+			onToggle={(event) => setOpen(event.currentTarget.open)}
+		>
+			<summary className="cursor-pointer font-label font-semibold">
+				<FlaskConical className="mr-1 inline size-4" /> Plate lab — classic
+				lists, tags, single-line, forced layout, markdown preview, editable
+				voids
+			</summary>
+			{open && (
+				<Suspense fallback={<Skeleton className="mt-3 h-40 w-full" />}>
+					<PlateLab />
+				</Suspense>
+			)}
+		</details>
+	);
+}
+
 export function PlateShowcase({ editor }: { editor: PlateEditor }) {
 	function insertShowcase() {
 		editor.tf.insertNodes(showcaseBlocks(), { at: [editor.children.length] });
@@ -120,6 +148,19 @@ export function PlateShowcase({ editor }: { editor: PlateEditor }) {
 			>
 				<Sparkles /> Insert showcase blocks
 			</Button>
+			<h3 className="mt-4 mb-2 font-label text-sm font-semibold">
+				Version history (@platejs/diff)
+			</h3>
+			<VersionHistory editor={editor} />
 		</details>
+	);
+}
+
+export function PlateExtras({ editor }: { editor: PlateEditor }) {
+	return (
+		<>
+			<PlateShowcase editor={editor} />
+			<LabSection />
+		</>
 	);
 }

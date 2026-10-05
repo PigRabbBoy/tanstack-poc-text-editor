@@ -183,7 +183,8 @@ export function CodeLineElementDocx(props: SlateElementProps) {
       {...props}
       as="p"
       style={{
-        fontFamily: "'Courier New', Consolas, monospace",
+        // POC: unquoted (see callout-node-static) so juice can parse it.
+        fontFamily: 'Courier New, Consolas, monospace',
         fontSize: '10pt',
         margin: 0,
         padding: 0,
@@ -266,7 +267,8 @@ export function CodeSyntaxLeafDocx(props: SlateLeafProps) {
       data-slate-leaf="true"
       style={{
         color,
-        fontFamily: "'Courier New', Consolas, monospace",
+        // POC: unquoted (see callout-node-static) so juice can parse it.
+        fontFamily: 'Courier New, Consolas, monospace',
         fontSize: '10pt',
         fontStyle,
         fontWeight,

@@ -5,6 +5,7 @@ import {
 	FontColorPlugin,
 	FontFamilyPlugin,
 	FontSizePlugin,
+	FontWeightPlugin,
 } from "@platejs/basic-styles/react";
 import { KEYS } from "platejs";
 import type { PlatePluginConfig } from "platejs/react";
@@ -25,4 +26,6 @@ export const FontKit = [
 	FontBackgroundColorPlugin.configure(options),
 	FontSizePlugin.configure(options),
 	FontFamilyPlugin.configure(options),
+	// POC: font weight is documented but missing from the registry kit.
+	FontWeightPlugin.configure(options),
 ];
