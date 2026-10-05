@@ -1,14 +1,160 @@
-import { pendingFeatures } from "@/editors/pending";
 import type { EditorMeta } from "@/editors/types";
 
 export const meta: EditorMeta = {
 	id: "tiptap",
 	name: "Tiptap",
-	tagline: "TODO",
-	homepage: "TODO",
-	packages: [],
-	uiApproach: "TODO",
-	features: pendingFeatures(),
-	showcase: [],
-	findings: [],
+	tagline:
+		"Headless ProseMirror framework (v3.31, MIT core) — every pixel of UI on this page is ours, built from the app's shadcn components.",
+	homepage: "https://tiptap.dev",
+	packages: [
+		"@tiptap/react",
+		"@tiptap/pm",
+		"@tiptap/starter-kit",
+		"@tiptap/markdown",
+		"@tiptap/static-renderer",
+		"@tiptap/suggestion",
+		"@tiptap/extension-mention",
+		"@tiptap/extension-drag-handle-react",
+		"@tiptap/extension-node-range",
+		"@tiptap/extension-code-block-lowlight",
+		"@tiptap/extension-table",
+		"@tiptap/extension-task-list",
+		"@tiptap/extension-task-item",
+		"@tiptap/extension-image",
+		"@tiptap/extension-file-handler",
+		"@tiptap/extension-text-align",
+		"@tiptap/extension-text-style",
+		"@tiptap/extension-highlight",
+		"@tiptap/extension-subscript",
+		"@tiptap/extension-superscript",
+		"@tiptap/extension-typography",
+		"@tiptap/extension-details",
+		"@tiptap/extension-mathematics",
+		"@tiptap/extension-emoji",
+		"@tiptap/extension-youtube",
+		"@tiptap/extension-character-count",
+		"@tiptap/extension-placeholder",
+		"@tiptap/extension-table-of-contents",
+		"lowlight",
+		"katex",
+	],
+	uiApproach:
+		"Hand-built. Tiptap ships no UI in its MIT packages; the official 'Tiptap UI Components' are SCSS-based and the slash / drag / mention dropdown UIs need the paid Start plan. Fixed toolbar, BubbleMenu contents, link popover, colour menu, table menu and the slash / @ / {{ / : popups are our own React components on src/components/ui (Toggle, DropdownMenu, Popover, Command, Tooltip, Dialog) + lucide icons, styled with BML tokens in tiptap.css.",
+	features: {
+		marks: {
+			status: "builtin",
+			note: "StarterKit (bold, italic, underline, strike, code) + Subscript / Superscript / Highlight / Color extensions; toolbar is ours.",
+		},
+		headings: {
+			status: "builtin",
+			note: "StarterKit Heading; dropdown is ours.",
+		},
+		lists: {
+			status: "builtin",
+			note: "StarterKit (v3 lists live in @tiptap/extension-list).",
+		},
+		"task-list": {
+			status: "builtin",
+			note: "TaskList + TaskItem (nested), markdown `- [x]` round-trips.",
+		},
+		link: {
+			status: "builtin",
+			note: "Link is in StarterKit v3 (autolink on); the edit popover is ours.",
+		},
+		blockquote: { status: "builtin" },
+		"code-block": {
+			status: "builtin",
+			note: "CodeBlockLowlight + lowlight `common`; token colours are our CSS. The static renderer does not run decorations, so Rendered re-highlights with lowlight in a nodeMapping.",
+		},
+		table: {
+			status: "builtin",
+			note: "TableKit (resizable columns, merge/split, header row); insert/edit menu is ours. Markdown export re-pads table columns.",
+		},
+		image: {
+			status: "builtin",
+			note: "Image (allowBase64) + FileHandler for paste/drop; picker, fileToDataUrl and the >1 MB toast are our wiring. No resize/caption UI.",
+		},
+		"undo-redo": { status: "builtin", note: "UndoRedo in StarterKit." },
+		"slash-menu": {
+			status: "custom",
+			note: "@tiptap/suggestion (char '/') + our Command-styled popup, positioned by Suggestion's built-in floating-ui `mount()`. Official slash UI is paid.",
+		},
+		"drag-handle": {
+			status: "builtin",
+			note: "@tiptap/extension-drag-handle-react (MIT) — verified reorder with the mouse. It statically imports @tiptap/extension-collaboration + @tiptap/y-tiptap (yjs) even without collaboration.",
+		},
+		"floating-toolbar": {
+			status: "builtin",
+			note: "Official BubbleMenu from @tiptap/react/menus; the buttons inside are ours.",
+		},
+		"fixed-toolbar": {
+			status: "custom",
+			note: "No free toolbar exists; built from shadcn Toggle / DropdownMenu / Popover with useEditorState.",
+		},
+		"markdown-shortcuts": {
+			status: "builtin",
+			note: "Input rules for #, -, 1., [ ], >, ```, **bold** etc. Plus our own `{{name}}` input/paste rule and Typography auto-replace.",
+		},
+		mention: {
+			status: "custom",
+			note: 'Official Mention node + our popup; we overrode its markdown (default is `[@ id="u1" label="…"]`) and HTML attributes (default adds data-label / data-mention-suggestion-char) to match the shared forms.',
+		},
+		variable: {
+			status: "custom",
+			note: "Node.create (inline atom) + ReactNodeViewRenderer chip; a second Suggestion plugin with char '{{', a slash item, and a `{{name}}` input rule.",
+		},
+		"markdown-import": {
+			status: "builtin",
+			note: "@tiptap/markdown (marked) with our markdownTokenizer/parseMarkdown for {{var}} and [@Label](mention:id). Marks around an atom are dropped upstream; we handle the `**{{x}}**` case ourselves.",
+		},
+		"markdown-export": {
+			status: "builtin",
+			note: "editor.getMarkdown() with our renderMarkdown; the sample's Round-trip is lossless (table columns are re-padded on first export).",
+		},
+		"html-export": {
+			status: "builtin",
+			note: "editor.getHTML(); renderHTML emits the shared data-type/data-name/data-id spans.",
+		},
+		"static-render": {
+			status: "builtin",
+			note: "@tiptap/static-renderer renderToReactElement from JSON (no editor instance); nodeMapping for chips, lowlight, KaTeX and task checkboxes.",
+		},
+		ssr: {
+			status: "builtin",
+			note: "useEditor({ immediatelyRender: false }); the route module imports on the server without touching window. Static renderer is SSR-capable.",
+		},
+		"thai-ime": {
+			status: "partial",
+			note: "Manual check. Playwright keyboard.type of Thai text works (that is not a real IME composition).",
+		},
+	},
+	showcase: [
+		"Headless: every menu here is our own shadcn component — no Tiptap CSS at all.",
+		"Multiple suggestion triggers side by side: / blocks, @ people, {{ variables, : emoji.",
+		"Extension API: the variable chip is ~60 lines (Node.create + markdown tokenizer + input/paste rules + React node view).",
+		"BubbleMenu floating toolbar with colour, highlight and link popover.",
+		"Typography auto-replace while typing: -- → —, (c) → ©, 1/2 → ½, smart quotes.",
+		"Details/summary toggle blocks, KaTeX inline & block math (click to edit), YouTube embeds, GitHub emoji.",
+		"Text colour, multicolour highlight, sub/superscript, text alignment.",
+		"TableOfContents extension drives the live outline below; CharacterCount drives the status bar.",
+		"Drag handle with node-range selection; paste/drop images via FileHandler.",
+		"Rendered tab uses @tiptap/static-renderer — JSON → React with no editor instance.",
+	],
+	findings: [
+		"v3 package moves: CharacterCount/Placeholder live in @tiptap/extensions (the extension-* packages are thin re-exports); TaskList/TaskItem in @tiptap/extension-list; Color in @tiptap/extension-text-style (@tiptap/extension-color just re-exports it); Link + Underline joined StarterKit; TableKit in @tiptap/extension-table; BubbleMenu moved to @tiptap/react/menus. @tiptap/html and @tiptap/extension-color are not needed.",
+		"@tiptap/core is not a direct dependency, so with pnpm we import Node/mergeAttributes/InputRule from @tiptap/react (it re-exports core).",
+		"@tiptap/extension-drag-handle statically imports @tiptap/extension-collaboration and @tiptap/y-tiptap → yjs is pulled into the bundle even with no collaboration (pnpm auto-installed the peers).",
+		"@tiptap/markdown (early release) uses the global `marked` singleton and calls marked.use() for custom tokenizers on every editor instance, so tokenizers accumulate across remounts (Reset / Import / Round-trip). Passing `marked: new Marked()` would fix it but needs `marked` as a direct dependency.",
+		"@tiptap/markdown only applies marks to text nodes: `**{{contract_id}}**` lost its bold both on parse and serialize. Our tokenizers accept one wrapping **/*/~~ around a chip; an atom inside a longer bold run still loses the mark.",
+		"Markdown fidelity on the sample: after the first load only the table changes (columns padded, blank line around it); the page's Round-trip is then lossless. Soft line breaks survive as \\n text.",
+		'Mention ships its own markdown shortcode `[@ id="u1" label="…"]` and extra HTML attributes; both overridden via Mention.extend.',
+		"Mathematics' inline tokenizer turns any `$…$` pair into math on markdown import (e.g. 'costs $5 and $10'). Its katex peer range stops at 0.18; the app has katex 0.19 (works).",
+		"Suggestion 3.x has built-in floating-ui positioning (`props.mount(el)`, auto-update, outside-click dismiss) — no tippy.js needed; @floating-ui/dom comes in via @tiptap/react.",
+		"Emoji extension is ~620 KB of bundled data and probes emoji support with a canvas (Chrome logs a Canvas2D getImageData warning; jsdom logs 'getContext not implemented').",
+		"useEditor in v3 no longer re-renders per transaction: toolbars must use useEditorState. Options must be memoized, otherwise a new extensions array makes useEditor call setOptions every render.",
+		"ReactRenderer works with React 19 function components receiving `ref` as a prop (no forwardRef needed).",
+		"The static renderer runs no node views/decorations: chips, code highlighting and KaTeX needed nodeMapping overrides.",
+		"TableOfContents writes id / data-toc-id attributes into headings, so they show up in the JSON and HTML exports.",
+		"Typography auto-replace changes what users typed (quotes, dashes), which then shows in the markdown export.",
+	],
 };
