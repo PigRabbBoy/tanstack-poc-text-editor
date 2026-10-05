@@ -1,0 +1,3 @@
+# One markdown/HTML convention for variables and mentions across all editors
+
+A variable is `{{customer_name}}` in markdown and `<span data-type="variable" data-name="customer_name">` in HTML; a mention is `[@Name](mention:u1)` and `<span data-type="mention" data-id="u1">`. Every editor must import and export exactly these forms (see `src/lib/conventions.ts`) so one sample document loads everywhere, the preview can fill variables without knowing which editor produced the HTML, and the round-trip check compares like with like. This forces custom markdown rules/transformers in all four editors, which is itself part of what the POC measures.

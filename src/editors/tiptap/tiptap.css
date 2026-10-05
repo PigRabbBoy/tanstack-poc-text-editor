@@ -1,0 +1,382 @@
+/*
+ * Tiptap is headless: it ships no CSS. Everything below is ours, written
+ * against the Boonmee Lab tokens (see src/styles.css).
+ */
+
+.tiptap-prose {
+	font-family: var(--font-sans, "Work Sans"), "Anuphan", sans-serif;
+	color: var(--foreground);
+	font-size: 1rem;
+	/* Thai stacks vowels/tone marks above and below: give lines room. */
+	line-height: 1.8;
+	overflow-wrap: anywhere;
+}
+
+.tiptap-prose > * + * {
+	margin-top: 0.75em;
+}
+
+.tiptap-prose :where(h1, h2, h3, h4) {
+	font-family: "Poppins", "Anuphan", sans-serif;
+	font-weight: 600;
+	line-height: 1.35;
+	letter-spacing: -0.01em;
+	margin-top: 1.4em;
+	margin-bottom: 0.4em;
+}
+
+.tiptap-prose > :first-child {
+	margin-top: 0;
+}
+
+.tiptap-prose h1 {
+	font-size: 1.9rem;
+}
+.tiptap-prose h2 {
+	font-size: 1.45rem;
+}
+.tiptap-prose h3 {
+	font-size: 1.2rem;
+}
+
+.tiptap-prose a {
+	color: var(--bml-color-link);
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+.tiptap-prose :where(ul, ol) {
+	padding-left: 1.5rem;
+}
+.tiptap-prose ul {
+	list-style: disc;
+}
+.tiptap-prose ol {
+	list-style: decimal;
+}
+.tiptap-prose li > p {
+	margin: 0.15em 0;
+}
+.tiptap-prose li::marker {
+	color: var(--primary-text);
+}
+
+.tiptap-prose ul[data-type="taskList"] {
+	list-style: none;
+	padding-left: 0.25rem;
+}
+.tiptap-prose ul[data-type="taskList"] li {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+}
+.tiptap-prose ul[data-type="taskList"] li > label {
+	flex: none;
+	margin-top: 0.4em;
+	user-select: none;
+}
+.tiptap-prose ul[data-type="taskList"] li > div {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.tiptap-prose ul[data-type="taskList"] input[type="checkbox"] {
+	accent-color: var(--primary);
+	width: 1rem;
+	height: 1rem;
+	cursor: pointer;
+}
+.tiptap-prose li[data-checked="true"] > div {
+	color: var(--muted-foreground);
+	text-decoration: line-through;
+}
+
+.tiptap-prose blockquote {
+	border-left: 3px solid var(--primary);
+	background: var(--bml-pink-050);
+	padding: 0.5rem 1rem;
+	color: var(--bml-slate);
+}
+
+.tiptap-prose code {
+	font-family: var(--font-mono, ui-monospace), monospace;
+	font-size: 0.85em;
+	background: var(--muted);
+	color: var(--bml-pink-700);
+	border-radius: 2px;
+	padding: 0.1em 0.35em;
+}
+
+.tiptap-prose pre {
+	background: var(--bml-ink);
+	color: #f4f4f5;
+	border-radius: 8px;
+	padding: 0.9rem 1rem;
+	overflow-x: auto;
+	font-size: 0.85rem;
+	line-height: 1.6;
+}
+.tiptap-prose pre code {
+	background: none;
+	color: inherit;
+	padding: 0;
+	font-size: inherit;
+}
+
+/* lowlight / highlight.js token colours on the BML ink background. */
+.tiptap-prose .hljs-comment,
+.tiptap-prose .hljs-quote {
+	color: #9a9a9c;
+	font-style: italic;
+}
+.tiptap-prose .hljs-keyword,
+.tiptap-prose .hljs-selector-tag,
+.tiptap-prose .hljs-built_in {
+	color: #f36ca1;
+}
+.tiptap-prose .hljs-string,
+.tiptap-prose .hljs-template-tag,
+.tiptap-prose .hljs-template-variable,
+.tiptap-prose .hljs-addition {
+	color: #cde358;
+}
+.tiptap-prose .hljs-number,
+.tiptap-prose .hljs-literal,
+.tiptap-prose .hljs-attr,
+.tiptap-prose .hljs-variable {
+	color: #84d4f1;
+}
+.tiptap-prose .hljs-title,
+.tiptap-prose .hljs-title.function_,
+.tiptap-prose .hljs-section,
+.tiptap-prose .hljs-type {
+	color: #f5854a;
+}
+.tiptap-prose .hljs-subst {
+	color: #f4f4f5;
+}
+
+.tiptap-prose hr {
+	border: none;
+	border-top: 1px solid var(--bml-gray-200);
+	margin: 1.5rem 0;
+}
+.tiptap-prose hr.ProseMirror-selectednode {
+	border-top-color: var(--primary);
+}
+
+.tiptap-prose img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 4px;
+}
+.tiptap-prose img.ProseMirror-selectednode {
+	outline: 3px solid var(--primary);
+}
+
+.tiptap-prose mark {
+	border-radius: 2px;
+	padding: 0 0.15em;
+	background: var(--bml-pink-050);
+	color: inherit;
+}
+
+/* Tables */
+.tiptap-prose .tableWrapper {
+	overflow-x: auto;
+}
+.tiptap-prose table {
+	border-collapse: collapse;
+	table-layout: fixed;
+	width: 100%;
+	margin: 0;
+	overflow: hidden;
+	font-size: 0.95em;
+}
+.tiptap-prose :where(td, th) {
+	border: 1px solid var(--bml-border-soft);
+	padding: 0.35rem 0.6rem;
+	vertical-align: top;
+	position: relative;
+	min-width: 1em;
+	box-sizing: border-box;
+}
+.tiptap-prose :where(td, th) > p {
+	margin: 0;
+}
+.tiptap-prose th {
+	background: var(--muted);
+	font-family: "Montserrat", "Anuphan", sans-serif;
+	font-weight: 600;
+	text-align: left;
+}
+.tiptap-prose .selectedCell::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background: rgba(237, 46, 124, 0.12);
+	pointer-events: none;
+}
+.tiptap-prose .column-resize-handle {
+	position: absolute;
+	right: -2px;
+	top: 0;
+	bottom: -2px;
+	width: 4px;
+	background: var(--primary);
+	pointer-events: none;
+}
+.tiptap-prose.resize-cursor,
+.tiptap.resize-cursor {
+	cursor: col-resize;
+}
+
+/* Mentions (official Mention node, our styling) */
+.tiptap-prose span[data-type="mention"] {
+	border-radius: 2px;
+	background: var(--bml-blue-050);
+	color: var(--bml-blue-600);
+	font-weight: 600;
+	padding: 0.05em 0.3em;
+	white-space: nowrap;
+}
+
+/* Details / summary (toggle block) */
+.tiptap-prose [data-type="details"],
+.tiptap-prose details {
+	display: flex;
+	gap: 0.25rem;
+	border: 1px solid var(--bml-border-soft);
+	border-radius: 4px;
+	padding: 0.5rem 0.75rem;
+}
+.tiptap-prose [data-type="details"] > button {
+	flex: none;
+	width: 1.25rem;
+	height: 1.25rem;
+	margin-top: 0.3em;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 2px;
+	color: var(--primary-text);
+	cursor: pointer;
+}
+.tiptap-prose [data-type="details"] > button::before {
+	content: "▸";
+	transition: transform 0.15s;
+}
+.tiptap-prose [data-type="details"].is-open > button::before {
+	transform: rotate(90deg);
+}
+.tiptap-prose [data-type="details"] > div {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+.tiptap-prose [data-type="details"]:not(.is-open) > div > [data-type="detailsContent"] {
+	display: none;
+}
+.tiptap-prose summary,
+.tiptap-prose [data-type="detailsSummary"] {
+	font-weight: 600;
+}
+
+/* Math (KaTeX) */
+.tiptap-prose [data-type="inline-math"] {
+	cursor: pointer;
+	padding: 0 0.1em;
+}
+.tiptap-prose [data-type="block-math"] {
+	cursor: pointer;
+	text-align: center;
+	padding: 0.5rem;
+}
+.tiptap .tiptap-mathematics-render--editable:hover,
+.tiptap [data-type="inline-math"]:hover,
+.tiptap [data-type="block-math"]:hover {
+	background: var(--muted);
+}
+
+/* YouTube */
+.tiptap-prose div[data-youtube-video] iframe {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	height: auto;
+	border-radius: 8px;
+	border: 0;
+}
+
+/* Emoji node */
+.tiptap-prose [data-type="emoji"] img {
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	vertical-align: -0.1em;
+}
+
+/* --- Editor-only chrome --- */
+
+.tiptap,
+.tiptap:focus-visible {
+	outline: none;
+	box-shadow: none;
+	min-height: 60vh;
+	padding: 1.5rem 1.5rem 3rem 3rem;
+}
+
+.tiptap .is-empty::before {
+	content: attr(data-placeholder);
+	float: left;
+	height: 0;
+	color: var(--bml-gray-300);
+	pointer-events: none;
+}
+
+/* Active suggestion trigger text (/, @, {{, :) */
+.tiptap .suggestion {
+	background: var(--bml-pink-050);
+	border-radius: 2px;
+}
+
+.tiptap ::selection {
+	background: rgba(237, 46, 124, 0.18);
+}
+
+.tiptap .ProseMirror-gapcursor::after {
+	border-top-color: var(--primary);
+}
+
+.tiptap .ProseMirror-selectednode[data-type="variable"],
+.tiptap .ProseMirror-selectednode > [data-type="variable"] {
+	outline: none;
+}
+
+/* Drag handle element positioned by @tiptap/extension-drag-handle */
+.tiptap-drag-handle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.25rem;
+	height: 1.5rem;
+	border-radius: 2px;
+	color: var(--bml-gray-300);
+	cursor: grab;
+	transition: background 0.1s, color 0.1s;
+}
+.tiptap-drag-handle:hover {
+	background: var(--muted);
+	color: var(--primary-text);
+}
+.tiptap-drag-handle:active {
+	cursor: grabbing;
+}
+
+.tiptap .ProseMirror-selectednode:not(img):not([data-type="variable"]) {
+	outline: 2px solid rgba(237, 46, 124, 0.35);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+.tiptap-static .tableWrapper,
+.tiptap-static table {
+	margin-top: 0.75em;
+}
