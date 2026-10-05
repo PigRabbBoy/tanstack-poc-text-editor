@@ -1,0 +1,83 @@
+/*
+ * BlockNote → Boonmee Lab. BlockNote themes through `--bn-*` variables on `.bn-root`
+ * (the editor container *and* every portalled menu root), so overriding them there
+ * restyles the editor, side menu, slash menu and toolbars together.
+ */
+.bn-root {
+	--bn-font-family: "Work Sans", "Anuphan", ui-sans-serif, system-ui, sans-serif;
+	--bn-border-radius: 4px;
+	--bn-colors-editor-text: var(--bml-ink);
+	--bn-colors-editor-background: transparent;
+	--bn-colors-menu-text: var(--bml-ink);
+	--bn-colors-menu-background: #ffffff;
+	--bn-colors-tooltip-text: #ffffff;
+	--bn-colors-tooltip-background: var(--bml-ink);
+	--bn-colors-hovered-text: var(--bml-pink-700);
+	--bn-colors-hovered-background: var(--bml-pink-050);
+	--bn-colors-selected-text: #ffffff;
+	--bn-colors-selected-background: var(--bml-pink-500);
+	--bn-colors-border: var(--bml-border-soft);
+	--bn-colors-side-menu: var(--bml-mute);
+	--bn-colors-highlights-pink-text: var(--bml-pink-600);
+	--bn-colors-highlights-pink-background: var(--bml-pink-050);
+	--bn-colors-highlights-purple-background: var(--bml-lavender);
+}
+
+/* The app's global :focus-visible ring would outline the whole document. */
+.bml-blocknote .bn-editor:focus-visible {
+	box-shadow: none;
+}
+
+.bml-blocknote .bn-default-styles {
+	font-family: var(--bn-font-family);
+	font-size: 16px;
+}
+
+/* Thai stacks vowels and tone marks above/below the line: give them room. */
+.bml-blocknote .bn-block-outer {
+	line-height: 1.75;
+}
+
+.bml-blocknote [data-content-type="heading"] {
+	font-family: "Poppins", "Anuphan", ui-sans-serif, system-ui, sans-serif;
+	letter-spacing: -0.01em;
+	line-height: 1.3;
+}
+
+.bml-blocknote [data-content-type="heading"][data-level="1"] {
+	--level: 2.25em;
+}
+
+.bml-blocknote [data-content-type="heading"][data-level="2"] {
+	--level: 1.6em;
+}
+
+.bml-blocknote .bn-editor a {
+	color: var(--bml-pink-600);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.bml-blocknote [data-content-type="quote"] blockquote {
+	border-left-color: var(--bml-pink-500);
+}
+
+.bml-blocknote .bn-inline-content code {
+	background: var(--bml-lavender);
+	border-radius: 2px;
+	padding: 0 0.25em;
+}
+
+/* The fixed toolbar reuses BlockNote's floating toolbar component — flatten it. */
+.bml-blocknote [data-testid="blocknote-fixed-toolbar"] > .bn-toolbar {
+	box-shadow: none;
+	border: none;
+	background: transparent;
+	flex-wrap: wrap;
+	overflow: visible;
+	max-width: 100%;
+}
+
+.bml-blocknote-readonly .bn-editor {
+	padding-inline: 0;
+}
