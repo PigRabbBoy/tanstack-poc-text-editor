@@ -1,13 +1,20 @@
 'use client';
 
+// POC: the registry menu (minus "Ask AI") extended so every block-level tool
+// is reachable from a right-click: all "Turn into" targets from the toolbar,
+// copy, insert below, align incl. justify, line height and text/background
+// colour for the selected blocks.
+
 import * as React from 'react';
 
+import { LineHeightPlugin } from '@platejs/basic-styles/react';
 import {
   BLOCK_CONTEXT_MENU_ID,
   BlockMenuPlugin,
   BlockSelectionPlugin,
+  copySelectedBlocks,
 } from '@platejs/selection/react';
-import { KEYS } from 'platejs';
+import { KEYS, PathApi } from 'platejs';
 import {
   useEditorPlugin,
   useEditorReadOnly,
@@ -19,6 +26,7 @@ import {
   ContextMenuContent,
   ContextMenuGroup,
   ContextMenuItem,
+  ContextMenuSeparator,
   ContextMenuSub,
   ContextMenuSubContent,
   ContextMenuSubTrigger,
@@ -27,12 +35,39 @@ import {
 import { setBlockType } from '@/editors/plate/components/editor/transforms';
 import { useIsTouchDevice } from '@/editors/plate/hooks/use-is-touch-device';
 
+import { DEFAULT_COLORS } from './font-color-toolbar-button';
+import { turnIntoItems } from './turn-into-toolbar-button';
+
+const TEXT_COLORS = ['black', 'red', 'orange', 'green', 'blue', 'purple', 'magenta'];
+const BACKGROUND_COLORS = [
+  'light red 3',
+  'light orange 3',
+  'light yellow 3',
+  'light green 3',
+  'light cornflower blue 3',
+  'light purple 3',
+];
+
+const pickColors = (names: string[]) =>
+  DEFAULT_COLORS.filter((color) => names.includes(color.name));
+
+function Swatch({ value }: { value: string }) {
+  return (
+    <span
+      className="size-3.5 rounded-sm border border-border"
+      style={{ backgroundColor: value }}
+    />
+  );
+}
+
 export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   const { api, editor } = useEditorPlugin(BlockMenuPlugin);
   const isTouch = useIsTouchDevice();
   const readOnly = useEditorReadOnly();
   const openId = usePluginOption(BlockMenuPlugin, 'openId');
   const isOpen = openId === BLOCK_CONTEXT_MENU_ID;
+
+  const blockSelection = editor.getTransforms(BlockSelectionPlugin).blockSelection;
 
   const handleTurnInto = React.useCallback(
     (type: string) => {
@@ -47,13 +82,29 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
   );
 
   const handleAlign = React.useCallback(
-    (align: 'center' | 'left' | 'right') => {
+    (align: 'center' | 'justify' | 'left' | 'right') => {
       editor
         .getTransforms(BlockSelectionPlugin)
         .blockSelection.setNodes({ align });
     },
     [editor]
   );
+
+  const insertParagraphBelow = React.useCallback(() => {
+    const nodes = editor.getApi(BlockSelectionPlugin).blockSelection.getNodes();
+    const last = nodes.at(-1);
+    if (!last) return;
+    const at = PathApi.next(last[1]);
+    editor.tf.insertNodes(editor.api.create.block({ type: KEYS.p }), {
+      at,
+      select: true,
+    });
+    editor.getApi(BlockSelectionPlugin).blockSelection.clear();
+    editor.tf.focus();
+  }, [editor]);
+
+  const lineHeights =
+    editor.getInjectProps(LineHeightPlugin).validNodeValues ?? [];
 
   if (isTouch) {
     return children;
@@ -92,6 +143,7 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
       {isOpen && (
         <ContextMenuContent
           className="w-64"
+          data-testid="plate-block-context-menu"
           onCloseAutoFocus={(e) => {
             e.preventDefault();
             editor.getApi(BlockSelectionPlugin).blockSelection.focus();
@@ -100,71 +152,44 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
           <ContextMenuGroup>
             <ContextMenuItem
               onClick={() => {
-                editor
-                  .getTransforms(BlockSelectionPlugin)
-                  .blockSelection.removeNodes();
+                blockSelection.removeNodes();
                 editor.tf.focus();
               }}
             >
               Delete
             </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                editor
-                  .getTransforms(BlockSelectionPlugin)
-                  .blockSelection.duplicate();
-              }}
-            >
+            <ContextMenuItem onClick={() => blockSelection.duplicate()}>
               Duplicate
-              {/* <ContextMenuShortcut>⌘ + D</ContextMenuShortcut> */}
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => copySelectedBlocks(editor)}>
+              Copy
+            </ContextMenuItem>
+            <ContextMenuItem onClick={insertParagraphBelow}>
+              Insert paragraph below
             </ContextMenuItem>
             <ContextMenuSub>
               <ContextMenuSubTrigger>Turn into</ContextMenuSubTrigger>
-              <ContextMenuSubContent className="w-48">
-                <ContextMenuItem onClick={() => handleTurnInto(KEYS.p)}>
-                  Paragraph
-                </ContextMenuItem>
-
-                <ContextMenuItem onClick={() => handleTurnInto(KEYS.h1)}>
-                  Heading 1
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => handleTurnInto(KEYS.h2)}>
-                  Heading 2
-                </ContextMenuItem>
-                <ContextMenuItem onClick={() => handleTurnInto(KEYS.h3)}>
-                  Heading 3
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onClick={() => handleTurnInto(KEYS.blockquote)}
-                >
-                  Blockquote
-                </ContextMenuItem>
-                <ContextMenuItem
-                  onClick={() => handleTurnInto(KEYS.codeDrawing)}
-                >
-                  Code Drawing
-                </ContextMenuItem>
+              <ContextMenuSubContent className="max-h-[420px] w-52 overflow-y-auto">
+                {turnIntoItems.map((item) => (
+                  <ContextMenuItem
+                    key={item.value}
+                    onClick={() => handleTurnInto(item.value)}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </ContextMenuItem>
+                ))}
               </ContextMenuSubContent>
             </ContextMenuSub>
           </ContextMenuGroup>
 
+          <ContextMenuSeparator />
+
           <ContextMenuGroup>
-            <ContextMenuItem
-              onClick={() =>
-                editor
-                  .getTransforms(BlockSelectionPlugin)
-                  .blockSelection.setIndent(1)
-              }
-            >
+            <ContextMenuItem onClick={() => blockSelection.setIndent(1)}>
               Indent
             </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() =>
-                editor
-                  .getTransforms(BlockSelectionPlugin)
-                  .blockSelection.setIndent(-1)
-              }
-            >
+            <ContextMenuItem onClick={() => blockSelection.setIndent(-1)}>
               Outdent
             </ContextMenuItem>
             <ContextMenuSub>
@@ -178,6 +203,68 @@ export function BlockContextMenu({ children }: { children: React.ReactNode }) {
                 </ContextMenuItem>
                 <ContextMenuItem onClick={() => handleAlign('right')}>
                   Right
+                </ContextMenuItem>
+                <ContextMenuItem onClick={() => handleAlign('justify')}>
+                  Justify
+                </ContextMenuItem>
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+            <ContextMenuSub>
+              <ContextMenuSubTrigger>Line height</ContextMenuSubTrigger>
+              <ContextMenuSubContent className="w-40">
+                {lineHeights.map((value) => (
+                  <ContextMenuItem
+                    key={String(value)}
+                    onClick={() =>
+                      blockSelection.setNodes({ lineHeight: value } as any)
+                    }
+                  >
+                    {String(value)}
+                  </ContextMenuItem>
+                ))}
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+            <ContextMenuSub>
+              <ContextMenuSubTrigger>Text color</ContextMenuSubTrigger>
+              <ContextMenuSubContent className="w-48">
+                {pickColors(TEXT_COLORS).map((color) => (
+                  <ContextMenuItem
+                    key={color.name}
+                    className="capitalize"
+                    onClick={() => blockSelection.setTexts({ color: color.value })}
+                  >
+                    <Swatch value={color.value} />
+                    {color.name}
+                  </ContextMenuItem>
+                ))}
+                <ContextMenuItem
+                  onClick={() => blockSelection.setTexts({ color: undefined })}
+                >
+                  Default
+                </ContextMenuItem>
+              </ContextMenuSubContent>
+            </ContextMenuSub>
+            <ContextMenuSub>
+              <ContextMenuSubTrigger>Background</ContextMenuSubTrigger>
+              <ContextMenuSubContent className="w-56">
+                {pickColors(BACKGROUND_COLORS).map((color) => (
+                  <ContextMenuItem
+                    key={color.name}
+                    className="capitalize"
+                    onClick={() =>
+                      blockSelection.setTexts({ backgroundColor: color.value })
+                    }
+                  >
+                    <Swatch value={color.value} />
+                    {color.name}
+                  </ContextMenuItem>
+                ))}
+                <ContextMenuItem
+                  onClick={() =>
+                    blockSelection.setTexts({ backgroundColor: undefined })
+                  }
+                >
+                  None
                 </ContextMenuItem>
               </ContextMenuSubContent>
             </ContextMenuSub>

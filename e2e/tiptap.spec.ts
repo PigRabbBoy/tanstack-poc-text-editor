@@ -1,4 +1,4 @@
-import { expect, type Page, test } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 const content = (page: Page) => page.getByTestId("tiptap-content");
 
@@ -134,9 +134,7 @@ test.describe("Tiptap editor", () => {
 			"iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
 			"base64",
 		);
-		const input = page.locator(
-			'[data-testid="tiptap-editor"] input[type="file"]',
-		);
+		const input = page.getByTestId("tiptap-image-input");
 		await input.setInputFiles({
 			name: "dot.png",
 			mimeType: "image/png",
@@ -167,5 +165,193 @@ test.describe("Tiptap editor", () => {
 		await expect(content(page)).not.toContainText("ใบเสนอราคา");
 		await page.getByTestId("reset").click();
 		await expect(content(page)).toContainText("ใบเสนอราคา");
+	});
+});
+
+const PNG_120X80 = Buffer.from(
+	"iVBORw0KGgoAAAANSUhEUgAAAHgAAABQCAIAAABd+SbeAAAAg0lEQVR42u3QQQ0AAAgEoEtkQivbwRbOBxsJyFRzIApEi0a0aNEWRItGtGjRFkSLRrRo0YgWjWjRohEtGtGiRSNaNKJFi0a0aESLFo1o0YgWLRrRohEtWjSiRSNatGhEi0a0aNGIFo1o0aIRLRrRokUjWjSiRYtGtGhEixaNaNGI/mMBejah9s2AjmsAAAAASUVORK5CYII=",
+	"base64",
+);
+
+/**
+ * Selects the first word of the block that contains `text` with the keyboard.
+ * (A double-click lands on the element's centre, which is rarely that word.)
+ */
+async function selectWord(page: Page, text: string) {
+	await content(page)
+		.getByText(text, { exact: false })
+		.first()
+		.click({ position: { x: 2, y: 8 } });
+	await page.keyboard.press("Home");
+	await page.keyboard.press("Shift+Control+ArrowRight");
+	// The bubble menu appears once ProseMirror has read the new selection.
+	await expect(page.getByTestId("tiptap-bubble-menu")).toBeVisible();
+}
+
+/** Opens a toolbar menu once the previous one has finished closing. */
+async function openMenu(page: Page, trigger: Locator) {
+	await expect(page.getByRole("menu")).toHaveCount(0);
+	await trigger.click();
+	await expect(page.getByRole("menu")).toBeVisible();
+}
+
+async function markdownPreview(page: Page) {
+	await page.getByRole("tab", { name: /Markdown/ }).click();
+	return page.getByTestId("preview-markdown");
+}
+
+test.describe("Tiptap tools", () => {
+	test("font family, size and background come from TextStyleKit and survive markdown", async ({
+		page,
+	}) => {
+		await openFresh(page);
+		await selectWord(page, "Discovery");
+		await page.getByTestId("tiptap-font-family").click();
+		await page.getByRole("menuitemradio", { name: "Poppins" }).click();
+		await openMenu(page, page.getByTestId("tiptap-font-size"));
+		await page.getByRole("menuitemradio", { name: "20px" }).click();
+		await openMenu(
+			page,
+			page
+				.getByTestId("tiptap-toolbar")
+				.getByRole("button", { name: "Text colour and highlight" }),
+		);
+		await page.getByTestId("tiptap-bg-lavender").click();
+		await expect(
+			content(page).locator(
+				'span[style*="Poppins"][style*="20px"][style*="background-color"]',
+			),
+		).toHaveText("Discovery");
+		await expect(await markdownPreview(page)).toContainText(
+			"font-family: Poppins; font-size: 20px",
+		);
+	});
+
+	test("find and replace replaces every match", async ({ page }) => {
+		await openFresh(page);
+		await content(page).locator("h1").click();
+		await page.keyboard.press("Control+f");
+		const find = page.getByTestId("tiptap-find");
+		await expect(find).toBeVisible();
+		await find.getByLabel("Find", { exact: true }).fill("Discovery");
+		await expect(page.getByTestId("tiptap-find-count")).toHaveText(/ of /);
+		await expect(
+			content(page).locator(".find-and-replace-result"),
+		).not.toHaveCount(0);
+		await find.getByLabel("Replace with").fill("Kickoff");
+		await find.getByRole("button", { name: "All" }).click();
+		await expect(content(page)).toContainText("Kickoff workshop");
+		await expect(content(page)).not.toContainText("Discovery");
+	});
+
+	test("image resize presets and caption reach the HTML and markdown", async ({
+		page,
+	}) => {
+		await openFresh(page);
+		await caretAtEnd(page);
+		await page.keyboard.press("Enter");
+		await page.getByTestId("tiptap-image-input").setInputFiles({
+			name: "dot.png",
+			mimeType: "image/png",
+			buffer: PNG_120X80,
+		});
+		const image = content(page).locator('img[src^="data:image/png"]');
+		await expect(image).toHaveCount(1);
+		await image.click();
+		const bubble = page.getByTestId("tiptap-image-bubble");
+		await expect(bubble).toBeVisible();
+		await bubble.getByTestId("tiptap-image-caption").click();
+		const prompt = page.getByTestId("tiptap-prompt");
+		await prompt.getByRole("textbox").fill("Figure 1 dot");
+		await prompt.getByRole("button", { name: "Update" }).click();
+		await expect(
+			content(page).locator(".tiptap-image-caption:not([hidden])"),
+		).toHaveText("Figure 1 dot");
+		await image.click();
+		await bubble.getByRole("button", { name: "Width 240px" }).click();
+		await expect(image).toHaveCSS("width", "240px");
+		await expect(await markdownPreview(page)).toContainText(
+			'title="Figure 1 dot" width="240"',
+		);
+		await page.getByRole("tab", { name: "Rendered" }).click();
+		await expect(
+			page.getByTestId("tiptap-rendered").locator("figcaption"),
+		).toHaveText("Figure 1 dot");
+	});
+
+	test("ruby annotation via the toolbar exports <ruby> markdown", async ({
+		page,
+	}) => {
+		await openFresh(page);
+		await selectWord(page, "Checklist");
+		await page.getByTestId("tiptap-toolbar").getByTestId("tiptap-ruby").click();
+		const prompt = page.getByTestId("tiptap-prompt");
+		await prompt.getByRole("textbox").fill("เช็กลิสต์");
+		await prompt.getByRole("button", { name: "Insert" }).click();
+		await expect(content(page).locator("ruby rt")).toHaveText("เช็กลิสต์");
+		await expect(await markdownPreview(page)).toContainText(
+			"<ruby>Checklist<rt>เช็กลิสต์</rt></ruby>",
+		);
+	});
+
+	test("settings toggle invisible characters, block IDs and read-only", async ({
+		page,
+	}) => {
+		await openFresh(page);
+		const settings = page.getByTestId("tiptap-settings");
+		await openMenu(page, settings);
+		await page.getByRole("menuitemcheckbox", { name: /Invisible/ }).click();
+		await expect(
+			content(page).locator(".tiptap-invisible-character").first(),
+		).toBeAttached();
+		await openMenu(page, settings);
+		await page.getByRole("menuitemcheckbox", { name: /Block IDs/ }).click();
+		await expect(
+			content(page).locator("h1[data-block-label^='heading · ']"),
+		).toHaveCount(1);
+		await openMenu(page, settings);
+		await page.getByRole("menuitemcheckbox", { name: /Read-only/ }).click();
+		await expect(content(page)).toHaveAttribute("contenteditable", "false");
+		await expect(page.getByTestId("tiptap-status")).toContainText("read-only");
+	});
+
+	test("floating menu on an empty line and slash → Insert markdown", async ({
+		page,
+	}) => {
+		await openFresh(page);
+		await caretAtEnd(page);
+		await page.keyboard.press("Enter");
+		const floating = page.getByTestId("tiptap-floating-menu");
+		await expect(floating).toBeVisible();
+		await floating.getByRole("button", { name: "Heading 2" }).click();
+		await page.keyboard.type("Floating heading");
+		await expect(
+			content(page).locator("h2", { hasText: "Floating heading" }),
+		).toBeVisible();
+		await page.keyboard.press("Enter");
+		await page.keyboard.type("/markdown");
+		await page
+			.getByTestId("tiptap-suggestion")
+			.getByText("Insert markdown", { exact: true })
+			.click();
+		const prompt = page.getByTestId("tiptap-prompt");
+		await prompt.getByRole("textbox").fill("- pay {{amount}} by {{due_date}}");
+		await prompt.getByRole("button", { name: "Insert" }).click();
+		await expect(
+			content(page).locator('li [data-type="variable"][data-name="due_date"]'),
+		).toHaveCount(1);
+	});
+
+	test("editor events are counted live", async ({ page }) => {
+		await openFresh(page);
+		const update = page
+			.getByTestId("tiptap-events")
+			.locator('[data-event="update"]');
+		const count = async () =>
+			Number((await update.innerText()).replace(/\D/g, ""));
+		const before = await count();
+		await caretAtEnd(page);
+		await page.keyboard.type("abc");
+		await expect.poll(count).toBeGreaterThanOrEqual(before + 3);
 	});
 });

@@ -3,6 +3,7 @@ import {
 	BaseFontColorPlugin,
 	BaseFontFamilyPlugin,
 	BaseFontSizePlugin,
+	BaseFontWeightPlugin,
 } from "@platejs/basic-styles";
 import type { SlatePluginConfig } from "platejs";
 import { KEYS } from "platejs";
@@ -16,4 +17,6 @@ export const BaseFontKit = [
 	BaseFontBackgroundColorPlugin.configure(options),
 	BaseFontSizePlugin.configure(options),
 	BaseFontFamilyPlugin.configure(options),
+	// POC: font weight is documented but missing from the registry kit.
+	BaseFontWeightPlugin.configure(options),
 ];

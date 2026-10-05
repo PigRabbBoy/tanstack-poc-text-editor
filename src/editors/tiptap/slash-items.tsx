@@ -1,12 +1,21 @@
+import { migrateMathStrings } from "@tiptap/extension-mathematics";
 import type { Editor, Range } from "@tiptap/react";
 import {
 	AtSign,
+	AudioLines,
 	Braces,
 	ChevronRightSquare,
 	Code2,
+	CornerDownLeft,
+	FileCode,
+	FileMusic,
+	FileText,
 	Heading1,
 	Heading2,
 	Heading3,
+	Heading4,
+	Heading5,
+	Heading6,
 	ImageIcon,
 	List,
 	ListChecks,
@@ -18,6 +27,8 @@ import {
 	Smile,
 	SquareFunction,
 	Table,
+	Twitch,
+	WandSparkles,
 	Youtube,
 } from "lucide-react";
 import type { EditorActions } from "./editor-actions";
@@ -43,15 +54,20 @@ export const SLASH_ITEMS: SlashItem[] = [
 		run: (editor, range) =>
 			editor.chain().focus().deleteRange(range).setParagraph().run(),
 	},
-	...([1, 2, 3] as const).map(
+	...([1, 2, 3, 4, 5, 6] as const).map(
 		(level): SlashItem => ({
 			id: `heading${level}`,
 			title: `Heading ${level}`,
 			description: `${"#".repeat(level)} section title`,
 			group: BASIC,
-			icon: [<Heading1 key={1} />, <Heading2 key={2} />, <Heading3 key={3} />][
-				level - 1
-			],
+			icon: [
+				<Heading1 key={1} />,
+				<Heading2 key={2} />,
+				<Heading3 key={3} />,
+				<Heading4 key={4} />,
+				<Heading5 key={5} />,
+				<Heading6 key={6} />,
+			][level - 1],
 			hint: "#".repeat(level),
 			keywords: ["h", "title"],
 			run: (editor, range) =>
@@ -118,6 +134,16 @@ export const SLASH_ITEMS: SlashItem[] = [
 			editor.chain().focus().deleteRange(range).setHorizontalRule().run(),
 	},
 	{
+		id: "hardBreak",
+		title: "Line break",
+		description: "Soft break inside the block (Shift+Enter)",
+		group: BASIC,
+		icon: <CornerDownLeft />,
+		keywords: ["br", "newline", "shift"],
+		run: (editor, range) =>
+			editor.chain().focus().deleteRange(range).setHardBreak().run(),
+	},
+	{
 		id: "variable",
 		title: "Variable",
 		description: "Insert a {{variable}} chip",
@@ -179,6 +205,42 @@ export const SLASH_ITEMS: SlashItem[] = [
 		},
 	},
 	{
+		id: "twitch",
+		title: "Twitch",
+		description: "Embed a video, clip or channel",
+		group: MEDIA,
+		icon: <Twitch />,
+		keywords: ["video", "stream", "embed"],
+		run: (editor, range, actions) => {
+			editor.chain().focus().deleteRange(range).run();
+			actions.prompt("twitch");
+		},
+	},
+	{
+		id: "audio",
+		title: "Audio (URL)",
+		description: "<audio> player from an mp3/ogg/wav link",
+		group: MEDIA,
+		icon: <AudioLines />,
+		keywords: ["sound", "podcast", "mp3"],
+		run: (editor, range, actions) => {
+			editor.chain().focus().deleteRange(range).run();
+			actions.prompt("audio");
+		},
+	},
+	{
+		id: "audioFile",
+		title: "Audio file",
+		description: "Inline an audio file (base64, ≤ 1 MB)",
+		group: MEDIA,
+		icon: <FileMusic />,
+		keywords: ["sound", "upload", "mp3"],
+		run: (editor, range, actions) => {
+			editor.chain().focus().deleteRange(range).run();
+			actions.pickAudio();
+		},
+	},
+	{
 		id: "emoji",
 		title: "Emoji",
 		description: "Type : to search",
@@ -222,6 +284,42 @@ export const SLASH_ITEMS: SlashItem[] = [
 		run: (editor, range, actions) => {
 			editor.chain().focus().deleteRange(range).run();
 			actions.prompt("blockMath");
+		},
+	},
+	{
+		id: "mathMigrate",
+		title: "Convert $…$ text to math",
+		description: "migrateMathStrings() over the whole document",
+		group: ADVANCED,
+		icon: <WandSparkles />,
+		keywords: ["latex", "katex", "migrate"],
+		run: (editor, range) => {
+			editor.chain().focus().deleteRange(range).run();
+			migrateMathStrings(editor);
+		},
+	},
+	{
+		id: "html",
+		title: "Insert HTML",
+		description: "Paste HTML → generateJSON() → insert",
+		group: ADVANCED,
+		icon: <FileCode />,
+		keywords: ["paste", "import", "generateJSON"],
+		run: (editor, range, actions) => {
+			editor.chain().focus().deleteRange(range).run();
+			actions.prompt("html");
+		},
+	},
+	{
+		id: "markdown",
+		title: "Insert markdown",
+		description: "Parse markdown at the caret",
+		group: ADVANCED,
+		icon: <FileText />,
+		keywords: ["md", "paste", "import"],
+		run: (editor, range, actions) => {
+			editor.chain().focus().deleteRange(range).run();
+			actions.prompt("markdown");
 		},
 	},
 ];

@@ -8,6 +8,8 @@ import { LinkFloatingToolbar } from "@/editors/plate/ui/link-toolbar";
 
 export const LinkKit = [
 	LinkPlugin.configure({
+		// POC: typing at a link edge extends it only when the caret came from inside.
+		rules: { selection: { affinity: "directional" } },
 		inputRules: [
 			LinkRules.markdown(),
 			LinkRules.autolink({ variant: "paste" }),

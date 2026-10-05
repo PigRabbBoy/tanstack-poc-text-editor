@@ -380,3 +380,169 @@
 .tiptap-static table {
 	margin-top: 0.75em;
 }
+
+.tiptap-prose h4 {
+	font-size: 1.05rem;
+}
+.tiptap-prose h5 {
+	font-size: 0.95rem;
+}
+.tiptap-prose h6 {
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+/* OrderedList `type` attribute (our `ol { list-style: decimal }` would override the HTML hint). */
+.tiptap-prose ol[type="a"] {
+	list-style-type: lower-alpha;
+}
+.tiptap-prose ol[type="A"] {
+	list-style-type: upper-alpha;
+}
+.tiptap-prose ol[type="i"] {
+	list-style-type: lower-roman;
+}
+.tiptap-prose ol[type="I"] {
+	list-style-type: upper-roman;
+}
+
+/* Images: figure + caption (static render / HTML) and the resizable node view (editor). */
+.tiptap-prose figure[data-type="image"] {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.35rem;
+}
+.tiptap-prose figcaption,
+.tiptap-image-caption {
+	font-family: var(--font-label);
+	font-size: 0.8rem;
+	color: var(--muted-foreground);
+}
+.tiptap [data-resize-container][data-node="image"] {
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.35rem;
+}
+.tiptap [data-resize-container] img {
+	border-radius: 4px;
+}
+.tiptap [data-resize-handle] {
+	width: 10px;
+	height: 10px;
+	margin: -5px;
+	border: 2px solid var(--background);
+	border-radius: 2px;
+	background: var(--primary);
+	opacity: 0;
+	/* Handles only take clicks once the image is selected, so small images stay clickable. */
+	pointer-events: none;
+	transition: opacity 0.1s;
+	z-index: 1;
+}
+.tiptap [data-resize-handle="top-left"],
+.tiptap [data-resize-handle="bottom-right"] {
+	cursor: nwse-resize;
+}
+.tiptap [data-resize-handle="top-right"],
+.tiptap [data-resize-handle="bottom-left"] {
+	cursor: nesw-resize;
+}
+.tiptap [data-resize-container]:hover [data-resize-handle] {
+	opacity: 0.6;
+}
+.tiptap [data-resize-container].ProseMirror-selectednode [data-resize-handle],
+.tiptap [data-resize-container][data-resize-state="true"] [data-resize-handle] {
+	opacity: 1;
+	pointer-events: auto;
+}
+.tiptap [data-resize-container].ProseMirror-selectednode [data-resize-wrapper] {
+	outline: 3px solid var(--primary);
+	border-radius: 4px;
+}
+
+/* Audio + Twitch embeds */
+.tiptap-prose audio {
+	width: 100%;
+	max-width: 32rem;
+}
+.tiptap-prose div[data-twitch-video] iframe {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	height: auto;
+	border-radius: 8px;
+	border: 0;
+}
+
+/* RubyText */
+.tiptap-prose ruby rt {
+	font-size: 0.6em;
+	color: var(--primary-text);
+	font-family: var(--font-label);
+}
+.tiptap ruby rt {
+	cursor: pointer;
+}
+.tiptap ruby rt input {
+	font-size: 0.75rem;
+	border: 1px solid var(--primary);
+	border-radius: 2px;
+	padding: 0 0.2em;
+	background: var(--background);
+}
+
+/* Find & replace (we disable the extension's injected CSS) */
+.tiptap .find-and-replace-result {
+	background: var(--bml-viz-lime-light);
+	border-radius: 2px;
+}
+.tiptap .find-and-replace-result-current {
+	background: var(--primary);
+	color: var(--primary-foreground);
+}
+
+/* Selection extension: keeps the selection visible while a popover has focus */
+.tiptap .selection {
+	background: rgba(237, 46, 124, 0.18);
+}
+
+/* Focus extension + "Focus mode" setting */
+.tiptap-focus-mode .tiptap.ProseMirror-focused > :not(.has-focus) {
+	opacity: 0.3;
+	transition: opacity 0.2s;
+}
+
+/* Decorations API: block labels with the UniqueID uid */
+.tiptap-block-labels .tiptap > [data-block-label] {
+	position: relative;
+}
+.tiptap-block-labels .tiptap > [data-block-label]::after {
+	content: attr(data-block-label);
+	position: absolute;
+	top: -0.6rem;
+	right: 0;
+	padding: 0 0.35rem;
+	border-radius: 2px;
+	background: var(--muted);
+	color: var(--primary-text);
+	font-family: var(--font-mono);
+	font-size: 10px;
+	line-height: 1.4;
+	pointer-events: none;
+}
+
+/* Read-only: formatting controls are inert, find + settings stay usable */
+[data-readonly="true"] > .tiptap-format-controls > * {
+	pointer-events: none;
+	opacity: 0.4;
+}
+
+/* NodeRange: Mod+drag, Shift+↑/↓ or Mod+A select whole blocks */
+.tiptap.ProseMirror-noderangeselection *::selection {
+	background: transparent;
+}
+.tiptap .ProseMirror-selectednoderange {
+	background: rgba(237, 46, 124, 0.1);
+	border-radius: 2px;
+}

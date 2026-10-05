@@ -8,19 +8,19 @@ export const BUNDLE_SIZES: Partial<
 	Record<EditorId, { rawKb: number; gzipKb: number }>
 > = {
 	plate: {
-		rawKb: 4299,
-		gzipKb: 1294,
+		rawKb: 4426,
+		gzipKb: 1336,
 	},
 	blocknote: {
-		rawKb: 1109,
-		gzipKb: 339,
+		rawKb: 2659,
+		gzipKb: 754,
 	},
 	lexical: {
-		rawKb: 2048,
-		gzipKb: 553,
+		rawKb: 2526,
+		gzipKb: 709,
 	},
 	tiptap: {
-		rawKb: 1790,
-		gzipKb: 467,
+		rawKb: 2024,
+		gzipKb: 539,
 	},
 };

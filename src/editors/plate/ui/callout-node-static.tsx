@@ -4,6 +4,12 @@ import { SlateElement } from 'platejs/static';
 
 import { cn } from '@/lib/utils';
 
+// POC: unquoted family names — React escapes quotes in style attributes to
+// &quot;/&#x27;, and juice (DOCX export, browser build) splits declarations on
+// the entity's `;`, crashing "Export as Word".
+const EMOJI_FONT_FAMILY =
+  'Apple Color Emoji, Segoe UI Emoji, NotoColorEmoji, Noto Color Emoji, Segoe UI Symbol, Android Emoji, EmojiSymbols';
+
 export function CalloutElementStatic({
   children,
   className,
@@ -22,7 +28,7 @@ export function CalloutElementStatic({
           className="size-6 select-none text-[18px]"
           style={{
             fontFamily:
-              '"Apple Color Emoji", "Segoe UI Emoji", NotoColorEmoji, "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", EmojiSymbols',
+              EMOJI_FONT_FAMILY,
           }}
         >
           <span data-plate-prevent-deserialization>
@@ -66,7 +72,7 @@ export function CalloutElementDocx({ children, ...props }: SlateElementProps) {
                 border: 'none',
                 fontSize: '18px',
                 fontFamily:
-                  '"Apple Color Emoji", "Segoe UI Emoji", NotoColorEmoji, "Noto Color Emoji", "Segoe UI Symbol", "Android Emoji", EmojiSymbols',
+                  EMOJI_FONT_FAMILY,
               }}
             >
               <span data-plate-prevent-deserialization>{icon}</span>

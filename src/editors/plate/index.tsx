@@ -1,13 +1,25 @@
-import { lazy, Suspense } from "react";
+import { type ComponentType, lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EditorModule, EditorProps, RenderedProps } from "@/editors/types";
 import { meta } from "./meta";
 
-// The route module is also imported on the server, so Plate (and the
-// browser-only bits of its registry UI: DnD, excalidraw, html2canvas…) are
-// split into client chunks that load only when the editor mounts.
-const PlateEditor = lazy(() => import("./plate-editor"));
-const PlateRendered = lazy(() => import("./plate-rendered"));
+/** The server never renders the editor (ClientOnly), so it gets an empty module. */
+function serverStub<P>() {
+	return Promise.resolve({ default: (() => null) as ComponentType<P> });
+}
+
+// The route module is also imported on the server. `import.meta.env.SSR` is a
+// build-time constant, so the SSR/worker build drops these chunks (Plate, its
+// registry UI, docx-io, excalidraw…) entirely; the client loads them only when
+// the editor mounts. Keep each import() inline in its ternary.
+const PlateEditor = lazy(() =>
+	import.meta.env.SSR ? serverStub<EditorProps>() : import("./plate-editor"),
+);
+const PlateRendered = lazy(() =>
+	import.meta.env.SSR
+		? serverStub<RenderedProps>()
+		: import("./plate-rendered"),
+);
 
 function Loading() {
 	return (

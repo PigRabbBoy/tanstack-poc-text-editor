@@ -7,6 +7,7 @@ import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 import { PlaceholderPlugin } from '@platejs/media/react';
 import {
   AudioLinesIcon,
+  CodeXmlIcon,
   FileUpIcon,
   FilmIcon,
   ImageIcon,
@@ -49,6 +50,8 @@ const MEDIA_CONFIG: Record<
     icon: React.ReactNode;
     title: string;
     tooltip: string;
+    /** POC: embeds (YouTube, Vimeo, X…) only come from a URL. */
+    urlOnly?: boolean;
   }
 > = {
   [KEYS.audio]: {
@@ -75,6 +78,13 @@ const MEDIA_CONFIG: Record<
     title: 'Insert Video',
     tooltip: 'Video',
   },
+  [KEYS.mediaEmbed]: {
+    accept: [],
+    icon: <CodeXmlIcon className="size-4" />,
+    title: 'Embed (YouTube, Vimeo, X, …)',
+    tooltip: 'Embed',
+    urlOnly: true,
+  },
 };
 
 export function MediaToolbarButton({
@@ -98,8 +108,10 @@ export function MediaToolbarButton({
   return (
     <>
       <ToolbarSplitButton
+        tooltip={currentConfig.tooltip}
         onClick={() => {
-          openFilePicker();
+          if (currentConfig.urlOnly) setDialogOpen(true);
+          else openFilePicker();
         }}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown') {
@@ -129,10 +141,12 @@ export function MediaToolbarButton({
             alignOffset={-32}
           >
             <DropdownMenuGroup>
-              <DropdownMenuItem onSelect={() => openFilePicker()}>
-                {currentConfig.icon}
-                Upload from computer
-              </DropdownMenuItem>
+              {!currentConfig.urlOnly && (
+                <DropdownMenuItem onSelect={() => openFilePicker()}>
+                  {currentConfig.icon}
+                  Upload from computer
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem onSelect={() => setDialogOpen(true)}>
                 <LinkIcon />
                 Insert via URL

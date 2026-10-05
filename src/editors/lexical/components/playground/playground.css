@@ -1,0 +1,191 @@
+/*
+ * Styles for the Lexical playground ports in this folder (MIT, (c) Meta
+ * Platforms, Inc., adapted to the Boonmee Lab tokens).
+ */
+
+/* Keywords (KeywordsExtension) */
+.editor-keyword {
+  color: var(--primary-text);
+  font-weight: 700;
+}
+
+/* Page break (PageBreakNode) */
+hr[data-lexical-page-break] {
+  position: relative;
+  display: block;
+  width: 100%;
+  overflow: visible;
+  margin: 1.75rem 0;
+  border: none;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px dashed var(--border);
+  background-color: var(--muted);
+  height: 6px;
+}
+hr[data-lexical-page-break]::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: block;
+  padding: 1px 8px;
+  border: 1px solid var(--border);
+  background-color: var(--background);
+  content: "PAGE BREAK";
+  font-family: var(--font-label);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+hr[data-lexical-page-break].selected {
+  border-color: var(--primary);
+}
+@media print {
+  hr[data-lexical-page-break] {
+    visibility: hidden;
+  }
+}
+
+/* Table extras (TableActionMenu: striping / frozen row & column; scroll shadow) */
+.editor-table-row-striping tr:nth-child(even) {
+  background-color: color-mix(in oklch, var(--muted) 70%, transparent);
+}
+.editor-table-scrollable-wrapper.editor-table-frozen-row {
+  overflow-x: clip;
+}
+.editor-table-frozen-row tr:nth-of-type(1) > td,
+.editor-table-frozen-row tr:nth-of-type(1) > th {
+  overflow: clip;
+  background-color: var(--background);
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  box-shadow: inset 0 -1px 0 var(--border);
+}
+.editor-table-frozen-column tr > td:first-child,
+.editor-table-frozen-column tr > th:first-child {
+  background-color: var(--background);
+  position: sticky;
+  z-index: 2;
+  left: 0;
+  box-shadow: inset -1px 0 0 var(--border);
+}
+.editor-table-scroll-right {
+  box-shadow: inset -10px 0 10px rgba(0, 0, 0, 0.12);
+}
+.editor-table-scroll-left {
+  box-shadow: inset 10px 0 10px rgba(0, 0, 0, 0.12);
+}
+.editor-table-scroll-middle {
+  box-shadow:
+    inset 10px 0 10px rgba(0, 0, 0, 0.12),
+    inset -10px 0 10px rgba(0, 0, 0, 0.12);
+}
+
+/* Visible non-printing characters (VisibleNonPrintingExtension) */
+[data-lexical-visible-non-printing-linebreak]::before {
+  content: '↵';
+  color: #999;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  position: absolute;
+}
+[data-lexical-visible-non-printing-block] {
+  position: relative;
+}
+[data-lexical-visible-non-printing-block]::after {
+  content: '¶';
+  color: #999;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  font-size: var(--text-font-size, inherit);
+  font-weight: var(--text-font-weight, inherit);
+  font-family: var(--text-font-family, inherit);
+  text-decoration: none;
+  position: absolute;
+}
+[data-lexical-visible-non-printing-block]:has(br:only-child) {
+  font-size: var(--text-font-size, inherit);
+  font-weight: var(--text-font-weight, inherit);
+  font-family: var(--text-font-family, inherit);
+}
+[data-lexical-visible-non-printing-block]:has(br:last-child)::after {
+  bottom: 0;
+}
+[data-lexical-visible-non-printing-empty-root]
+  [data-lexical-visible-non-printing-block]::after {
+  content: '\200B';
+}
+[data-lexical-visible-non-printing-tab] {
+  position: relative;
+}
+[data-lexical-visible-non-printing-tab]::before {
+  content: '';
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 50%;
+  height: 8px;
+  transform: translateY(-50%);
+  /* Two-layer composition: fixed-size SVG arrowhead pinned to the right end,
+     plus a 1px stem that stretches across the rest of the tab whitespace.
+     Decouples the arrowhead shape from tab width so heading fonts (large tab
+     widths) and body fonts (small tab widths) both render a sane arrow. */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 6 8'%3E%3Cpath d='M0 0 L6 4 L0 8' fill='none' stroke='%23999' stroke-width='1.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      no-repeat right center / 6px 8px,
+    linear-gradient(#999, #999) no-repeat left center / calc(100% - 6px) 1px;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+/* Inline WOFF2 (~308 bytes) whose only glyph is a 120×120 unit square dot
+   centered at (130, 350) in a 1000 UPM space slot — maps U+0020 to a middle
+   dot for the VisibleNonPrintingExtension. Regenerate via
+   packages/lexical-playground/scripts/build-space-dot-font.py (requires
+   fonttools + brotli). */
+@font-face {
+  font-family: 'LexicalSpaceDot';
+  src: url('data:font/woff2;base64,d09GMgABAAAAAAFMAAoAAAAAAqQAAAEFAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAANAo4TwE2AiQDBgsGAAQgBXgHJhsAAiAvCmwbtjU1FiYhthYrpIeZP0WUDdns/1FKf0mxBFuaQjicQUicrhqlCPGg0W2W9y1dXXVcQyQEwQiD/qtPR6qarErVtE5oiiLwZ2DZQ/6H47jBcUQBQcKB0aD7Io/jhLuN+fQIbnfU7qKeyosJRQxw2QbD6OM/+vAFkF96xwANHeu6YF0ZKCUY/zzJAqCBQrCMVUABsvzk9M3G8Xrmm8uz/2E7y9nZyfIO60AQXnvE07/p3n/g+9o3cg8hn1joGggzLUp50HwIACApPKholgU0AACUCwGxhIBmypIuNSMObVbYLDp//JnAb9cc+UrqG6VTjxHgpg2EYiENarkcHCTaCQA=')
+    format('woff2');
+  unicode-range: U+0020;
+  font-display: block;
+}
+/* The TextNode override prepends the space-dot font to var(--font-family). */
+[data-lexical-visible-non-printing-active] {
+  --font-family: var(--font-sans);
+}
+
+/* Pages (PagesExtension): A4/Letter pages driven by --page-* custom properties */
+.lexical-page {
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+.lexical-page-content {
+  margin-bottom: auto;
+}
+@media screen {
+  .lexical-page {
+    width: var(--page-width);
+    min-height: var(--page-height);
+    max-width: 100%;
+    padding: var(--page-margin-top) var(--page-margin-right)
+      var(--page-margin-bottom) var(--page-margin-left);
+    margin: 0 auto 24px;
+    background: var(--background);
+    box-shadow: 0 0 0 1px var(--border), 0 2px 6px rgba(0, 0, 0, 0.06);
+    outline: none;
+  }
+}
+@media print {
+  .lexical-page {
+    page-break-inside: avoid;
+  }
+  .lexical-page + hr[data-lexical-page-break] {
+    display: none;
+  }
+}

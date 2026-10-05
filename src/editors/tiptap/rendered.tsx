@@ -1,5 +1,8 @@
+import "katex/dist/katex.min.css";
+import "./tiptap.css";
 import type { Node as PMNode } from "@tiptap/pm/model";
 import type { JSONContent } from "@tiptap/react";
+import { renderToHTMLString } from "@tiptap/static-renderer/pm/html-string";
 import { renderToReactElement } from "@tiptap/static-renderer/pm/react";
 import katex from "katex";
 import { createElement, type ReactNode, useMemo } from "react";
@@ -67,6 +70,23 @@ function MathFormula({ latex, display }: { latex: string; display: boolean }) {
 
 const extensions = schemaExtensions();
 
+/**
+ * Embeds (iframe / audio) render their raw HTML attributes (allowfullscreen,
+ * frameborder, cc_language…), which React rejects as props; render those nodes
+ * with the static renderer's HTML-string output instead.
+ */
+function EmbedHtml({ node }: { node: PMNode }) {
+	const html = renderToHTMLString({ content: node, extensions });
+	return (
+		<div
+			className="contents"
+			// Markup produced by the extension's own renderHTML for this node.
+			// biome-ignore lint/security/noDangerouslySetInnerHtml: static-renderer HTML string
+			dangerouslySetInnerHTML={{ __html: html }}
+		/>
+	);
+}
+
 /** Read-only render from JSON via `@tiptap/static-renderer` (no editor instance). */
 export function TiptapRendered({ json }: RenderedProps) {
 	const element = useMemo(() => {
@@ -112,6 +132,17 @@ export function TiptapRendered({ json }: RenderedProps) {
 								<div>{children}</div>
 							</li>
 						),
+						youtube: ({ node }) => <EmbedHtml node={node} />,
+						twitch: ({ node }) => <EmbedHtml node={node} />,
+						audio: ({ node }) => <EmbedHtml node={node} />,
+					},
+					markMapping: {
+						rubyText: ({ mark, children }) => (
+							<ruby>
+								{children}
+								<rt>{String(mark.attrs.rt ?? "")}</rt>
+							</ruby>
+						),
 					},
 				},
 			});
@@ -133,3 +164,6 @@ export function TiptapRendered({ json }: RenderedProps) {
 		</div>
 	);
 }
+
+/** Default export for the lazy import in index.tsx. */
+export default TiptapRendered;

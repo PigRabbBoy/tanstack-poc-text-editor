@@ -63,6 +63,48 @@ describe("tiptap markdown conventions", () => {
 		);
 	});
 
+	it("keeps marks without markdown syntax as inline HTML", () => {
+		const source = [
+			"H<sub>2</sub>O and x<sup>2</sup>",
+			'<span style="color: #c71e63; font-family: Poppins">styled</span> text',
+			'<mark data-color="#eceffb" style="background-color: #eceffb">lavender</mark> and ==plain==',
+			"<ruby>漢字<rt>かんじ</rt></ruby> reading",
+		].join("\n\n");
+		const editor = load(source);
+		const json = JSON.stringify(editor.getJSON());
+		expect(json).toContain('"type":"subscript"');
+		expect(json).toContain('"type":"superscript"');
+		expect(json).toContain('"color":"#c71e63"');
+		expect(json).toContain('"fontFamily":"Poppins"');
+		expect(json).toContain('"rt":"かんじ"');
+		const markdown = editor.getMarkdown();
+		expect(markdown).toBe(source);
+		expect(load(markdown).getMarkdown()).toBe(markdown);
+	});
+
+	it("keeps image captions and sizes through markdown and HTML", () => {
+		const editor = load(
+			'![Logo](https://x.dev/a.png "The caption")\n\n<img src="https://x.dev/b.png" alt="B" width="240" height="120">',
+		);
+		const [captioned, resized] = editor.getJSON().content ?? [];
+		expect(captioned).toMatchObject({
+			type: "image",
+			attrs: { title: "The caption", alt: "Logo" },
+		});
+		expect(resized).toMatchObject({
+			type: "image",
+			attrs: { width: 240, height: 120 },
+		});
+		expect(editor.getHTML()).toContain(
+			'<figure data-type="image"><img src="https://x.dev/a.png" alt="Logo" title="The caption"><figcaption>The caption</figcaption></figure>',
+		);
+		const markdown = editor.getMarkdown();
+		expect(load(markdown).getMarkdown()).toBe(markdown);
+		expect(load(editor.getHTML()).getJSON().content?.[0]).toMatchObject({
+			attrs: { title: "The caption" },
+		});
+	});
+
 	it("round-trips the sample document", () => {
 		const first = load(sample).getMarkdown();
 		const second = load(first).getMarkdown();

@@ -5,7 +5,14 @@ import * as React from 'react';
 import type { DropdownMenuProps } from '@radix-ui/react-dropdown-menu';
 
 import {
+  AudioLinesIcon,
   CalendarIcon,
+  CodeXmlIcon,
+  Columns2Icon,
+  Columns4Icon,
+  FileUpIcon,
+  LightbulbIcon,
+  SmileIcon,
   ChevronRightIcon,
   Code2,
   Columns3Icon,
@@ -102,6 +109,11 @@ const groups: Group[] = [
         label: 'Divider',
         value: KEYS.hr,
       },
+      {
+        icon: <LightbulbIcon />,
+        label: 'Callout',
+        value: KEYS.callout,
+      },
     ].map((item) => ({
       ...item,
       onSelect: (editor, value) => {
@@ -149,6 +161,21 @@ const groups: Group[] = [
       },
       {
         icon: <FilmIcon />,
+        label: 'Video',
+        value: KEYS.video,
+      },
+      {
+        icon: <AudioLinesIcon />,
+        label: 'Audio',
+        value: KEYS.audio,
+      },
+      {
+        icon: <FileUpIcon />,
+        label: 'File',
+        value: KEYS.file,
+      },
+      {
+        icon: <CodeXmlIcon />,
         label: 'Embed',
         value: KEYS.mediaEmbed,
       },
@@ -168,9 +195,19 @@ const groups: Group[] = [
         value: KEYS.toc,
       },
       {
+        icon: <Columns2Icon />,
+        label: '2 columns',
+        value: 'action_two_columns',
+      },
+      {
         icon: <Columns3Icon />,
         label: '3 columns',
         value: 'action_three_columns',
+      },
+      {
+        icon: <Columns4Icon />,
+        label: '4 columns',
+        value: 'action_four_columns',
       },
       {
         focusEditor: false,
@@ -202,6 +239,11 @@ const groups: Group[] = [
         icon: <Link2Icon />,
         label: 'Link',
         value: KEYS.link,
+      },
+      {
+        icon: <SmileIcon />,
+        label: 'Emoji',
+        value: 'action_emoji',
       },
       {
         focusEditor: true,

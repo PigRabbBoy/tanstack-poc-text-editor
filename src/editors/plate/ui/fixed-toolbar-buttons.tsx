@@ -42,6 +42,13 @@ import { TableToolbarButton } from './table-toolbar-button';
 import { ToggleToolbarButton } from './toggle-toolbar-button';
 import { ToolbarGroup } from './toolbar';
 import { TurnIntoToolbarButton } from './turn-into-toolbar-button';
+import { FindReplaceToolbarButton } from '@/editors/plate/toolbar/find-replace-toolbar-button';
+import {
+  FontFamilyToolbarButton,
+  FontWeightToolbarButton,
+} from '@/editors/plate/toolbar/font-toolbar-buttons';
+import { InlineEquationToolbarButton } from './equation-toolbar-button';
+import { SuggestionToolbarButton } from './suggestion-toolbar-button';
 
 export function FixedToolbarButtons() {
   const readOnly = useEditorReadOnly();
@@ -66,6 +73,12 @@ export function FixedToolbarButtons() {
           <ToolbarGroup>
             <InsertToolbarButton />
             <TurnIntoToolbarButton />
+          </ToolbarGroup>
+
+          {/* POC: font family (BML fonts first) + weight — no registry buttons. */}
+          <ToolbarGroup>
+            <FontFamilyToolbarButton />
+            <FontWeightToolbarButton />
             <FontSizeToolbarButton />
           </ToolbarGroup>
 
@@ -121,6 +134,7 @@ export function FixedToolbarButtons() {
             <LinkToolbarButton />
             <TableToolbarButton />
             <EmojiToolbarButton />
+            <InlineEquationToolbarButton />
           </ToolbarGroup>
 
           <ToolbarGroup>
@@ -128,6 +142,7 @@ export function FixedToolbarButtons() {
             <MediaToolbarButton nodeType={KEYS.video} />
             <MediaToolbarButton nodeType={KEYS.audio} />
             <MediaToolbarButton nodeType={KEYS.file} />
+            <MediaToolbarButton nodeType={KEYS.mediaEmbed} />
           </ToolbarGroup>
 
           <ToolbarGroup>
@@ -149,6 +164,8 @@ export function FixedToolbarButtons() {
           <HighlighterIcon />
         </MarkToolbarButton>
         <CommentToolbarButton />
+        <SuggestionToolbarButton />
+        <FindReplaceToolbarButton />
       </ToolbarGroup>
 
       <ToolbarGroup>

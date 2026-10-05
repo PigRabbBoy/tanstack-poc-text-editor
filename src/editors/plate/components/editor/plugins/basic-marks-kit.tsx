@@ -50,6 +50,9 @@ export const BasicMarksKit = [
 	CodePlugin.configure({
 		inputRules: [CodeRules.markdown()],
 		node: { component: CodeLeaf },
+		// POC: Plugin Rules / AffinityPlugin — a hard edge lets the caret step
+		// just outside inline code with the arrow keys (docs: rules.selection).
+		rules: { selection: { affinity: "hard" } },
 		shortcuts: { toggle: { keys: "mod+e" } },
 	}),
 	StrikethroughPlugin.configure({

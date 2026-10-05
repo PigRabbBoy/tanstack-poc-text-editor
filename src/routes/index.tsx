@@ -140,6 +140,17 @@ function Overview() {
 										{BUNDLE_SIZES[meta.id]?.gzipKb} KB gzip
 									</p>
 								)}
+								{meta.inventory.length > 0 && (
+									<p>
+										<span className="eyebrow text-muted-foreground">Tools</span>{" "}
+										{
+											meta.inventory.filter(
+												(tool) => tool.status === "included",
+											).length
+										}{" "}
+										of {meta.inventory.length} on the page
+									</p>
+								)}
 							</CardContent>
 						</Card>
 					</Link>

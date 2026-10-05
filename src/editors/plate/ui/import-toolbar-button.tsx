@@ -8,6 +8,7 @@ import { MarkdownPlugin } from '@platejs/markdown';
 import { ArrowUpToLineIcon } from 'lucide-react';
 import { getEditorDOMFromHtmlString } from 'platejs/static';
 import { useEditorRef } from 'platejs/react';
+import { toast } from 'sonner';
 import { useFilePicker } from 'use-file-picker';
 
 import {
@@ -67,7 +68,24 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
     },
   });
 
-  // POC: "Import from Word" (@platejs/docx-io) removed — see export-toolbar-button.
+  // POC: @platejs/docx-io is loaded on demand (see src/editors/plate/docx-io.ts).
+  const { openFilePicker: openDocxFilePicker } = useFilePicker({
+    accept: ['.docx'],
+    multiple: false,
+    onFilesSelected: async ({ plainFiles }) => {
+      const arrayBuffer = await plainFiles[0].arrayBuffer();
+      const { docxToNodes } = await import('@/editors/plate/docx-io');
+      const result = await docxToNodes(editor, arrayBuffer);
+
+      editor.tf.insertNodes(result.nodes);
+      toast.success(
+        `Imported ${result.nodes.length} blocks from Word` +
+          (result.comments.length
+            ? ` (${result.comments.length} comments)`
+            : '')
+      );
+    },
+  });
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen} modal={false} {...props}>
@@ -93,6 +111,14 @@ export function ImportToolbarButton(props: DropdownMenuProps) {
             }}
           >
             Import from Markdown
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onSelect={() => {
+              openDocxFilePicker();
+            }}
+          >
+            Import from Word
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>

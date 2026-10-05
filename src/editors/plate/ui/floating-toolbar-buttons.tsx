@@ -3,6 +3,7 @@
 import {
   BoldIcon,
   Code2Icon,
+  HighlighterIcon,
   ItalicIcon,
   StrikethroughIcon,
   UnderlineIcon,
@@ -58,6 +59,16 @@ export function FloatingToolbarButtons() {
             <InlineEquationToolbarButton />
 
             <LinkToolbarButton />
+          </ToolbarGroup>
+
+          {/* POC: highlight on the selection toolbar too. Colour dropdowns are
+              not: their modal menu blurs the editor, which hides this toolbar
+              before a swatch can be picked (they live in the fixed toolbar and
+              the block menu). */}
+          <ToolbarGroup>
+            <MarkToolbarButton nodeType={KEYS.highlight} tooltip="Highlight">
+              <HighlighterIcon />
+            </MarkToolbarButton>
           </ToolbarGroup>
         </>
       )}

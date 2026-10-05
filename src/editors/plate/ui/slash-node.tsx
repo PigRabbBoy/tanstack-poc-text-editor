@@ -4,12 +4,25 @@ import * as React from 'react';
 
 import type { PlateEditor, PlateElementProps } from 'platejs/react';
 
-import { insertImagePlaceholder } from '@platejs/media';
+import {
+  insertAudioPlaceholder,
+  insertFilePlaceholder,
+  insertImagePlaceholder,
+  insertMedia,
+  insertVideoPlaceholder,
+} from '@platejs/media';
 import {
   AtSignIcon,
+  AudioLinesIcon,
   BracesIcon,
   CalendarIcon,
+  CodeXmlIcon,
+  Columns2Icon,
+  Columns4Icon,
+  FileUpIcon,
+  FilmIcon,
   ImageIcon,
+  Link2Icon,
   MinusIcon,
   ChevronRightIcon,
   Code2,
@@ -17,6 +30,10 @@ import {
   Heading1Icon,
   Heading2Icon,
   Heading3Icon,
+  Heading4Icon,
+  Heading5Icon,
+  Heading6Icon,
+  SmileIcon,
   LightbulbIcon,
   ListIcon,
   ListOrdered,
@@ -117,6 +134,24 @@ const groups: Group[] = [
         value: KEYS.h3,
       },
       {
+        icon: <Heading4Icon />,
+        keywords: ['h4'],
+        label: 'Heading 4',
+        value: KEYS.h4,
+      },
+      {
+        icon: <Heading5Icon />,
+        keywords: ['h5'],
+        label: 'Heading 5',
+        value: KEYS.h5,
+      },
+      {
+        icon: <Heading6Icon />,
+        keywords: ['h6'],
+        label: 'Heading 6',
+        value: KEYS.h6,
+      },
+      {
         icon: <ListIcon />,
         keywords: ['unordered', 'ul', '-'],
         label: 'Bulleted list',
@@ -189,6 +224,42 @@ const groups: Group[] = [
           insertImagePlaceholder(editor, { select: true });
         },
       },
+      {
+        icon: <FilmIcon />,
+        keywords: ['movie', 'mp4'],
+        label: 'Video',
+        value: KEYS.video,
+        onSelect: (editor) => {
+          insertVideoPlaceholder(editor, { select: true });
+        },
+      },
+      {
+        icon: <AudioLinesIcon />,
+        keywords: ['sound', 'mp3'],
+        label: 'Audio',
+        value: KEYS.audio,
+        onSelect: (editor) => {
+          insertAudioPlaceholder(editor, { select: true });
+        },
+      },
+      {
+        icon: <FileUpIcon />,
+        keywords: ['attachment', 'pdf'],
+        label: 'File',
+        value: KEYS.file,
+        onSelect: (editor) => {
+          insertFilePlaceholder(editor, { select: true });
+        },
+      },
+      {
+        icon: <CodeXmlIcon />,
+        keywords: ['youtube', 'vimeo', 'twitter', 'embed'],
+        label: 'Embed',
+        value: KEYS.mediaEmbed,
+        onSelect: (editor) => {
+          void insertMedia(editor, { select: true, type: KEYS.mediaEmbed });
+        },
+      },
     ],
   },
   {
@@ -201,9 +272,22 @@ const groups: Group[] = [
         value: KEYS.toc,
       },
       {
+        icon: <Columns2Icon />,
+        keywords: ['columns', 'layout'],
+        label: '2 columns',
+        value: 'action_two_columns',
+      },
+      {
         icon: <Columns3Icon />,
+        keywords: ['columns', 'layout'],
         label: '3 columns',
         value: 'action_three_columns',
+      },
+      {
+        icon: <Columns4Icon />,
+        keywords: ['columns', 'layout'],
+        label: '4 columns',
+        value: 'action_four_columns',
       },
       {
         focusEditor: false,
@@ -240,6 +324,20 @@ const groups: Group[] = [
   {
     group: 'Inline',
     items: [
+      {
+        focusEditor: true,
+        icon: <Link2Icon />,
+        keywords: ['url', 'href'],
+        label: 'Link',
+        value: KEYS.link,
+      },
+      {
+        focusEditor: false,
+        icon: <SmileIcon />,
+        keywords: ['emoji', ':'],
+        label: 'Emoji',
+        value: 'action_emoji',
+      },
       {
         focusEditor: true,
         icon: <CalendarIcon />,

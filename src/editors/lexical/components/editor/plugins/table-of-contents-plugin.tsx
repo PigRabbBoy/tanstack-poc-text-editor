@@ -13,7 +13,6 @@ import {
 	SidebarGroupContent,
 	SidebarGroupLabel,
 	SidebarMenu,
-	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@/editors/lexical/ui/sidebar";
 import { cn } from "@/lib/utils";
@@ -119,13 +118,19 @@ function TableOfContentsList({
 				<SidebarMenu>
 					{tableOfContents.map(([key, text, tag]) => (
 						<SidebarMenuItem key={key}>
-							<SidebarMenuButton
-								isActive={selectedKey === key}
-								className={cn(INDENTS[tag])}
+							{/* POC: plain button. SidebarMenuButton needs a SidebarProvider,
+							    whose Ctrl/Cmd+B shortcut would steal the editor's bold key. */}
+							<button
+								type="button"
+								data-active={selectedKey === key}
+								className={cn(
+									"flex w-full items-center rounded-md px-2 py-1 text-start text-sm hover:bg-muted data-[active=true]:bg-muted data-[active=true]:font-medium",
+									INDENTS[tag],
+								)}
 								onClick={() => scrollToNode(key)}
 							>
-								<span>{text}</span>
-							</SidebarMenuButton>
+								<span className="truncate">{text}</span>
+							</button>
 						</SidebarMenuItem>
 					))}
 				</SidebarMenu>

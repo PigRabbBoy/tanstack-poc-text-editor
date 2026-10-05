@@ -2,8 +2,10 @@ import { type Editor, useEditorState } from "@tiptap/react";
 import {
 	Bold,
 	Code,
+	ExternalLink,
 	Highlighter,
 	Italic,
+	Languages,
 	Link2,
 	Link2Off,
 	Palette,
@@ -12,7 +14,12 @@ import {
 	Superscript,
 	Underline,
 } from "lucide-react";
-import { type ComponentProps, type ReactNode, useState } from "react";
+import {
+	type ComponentProps,
+	type ReactNode,
+	useEffect,
+	useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -35,6 +42,15 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+
+/**
+ * `onCloseAutoFocus` for every toolbar menu: Radix would move focus back to the
+ * trigger after the item's command already focused the editor, so the next
+ * keystroke would land on the button instead of the text.
+ */
+export function keepEditorFocus(event: Event) {
+	event.preventDefault();
+}
 
 type ToolbarButtonProps = Omit<
 	ComponentProps<typeof Toggle>,
@@ -143,10 +159,24 @@ export function MarkButtons({
 	);
 }
 
-/** Popover to add / edit / remove a link on the current selection. */
-export function LinkPopover({ editor }: { editor: Editor }) {
-	const [open, setOpen] = useState(false);
+/** Popover to add / edit / remove a link on the current selection (⌘K opens the toolbar one). */
+export function LinkPopover({
+	editor,
+	open: controlledOpen,
+	onOpenChange,
+}: {
+	editor: Editor;
+	open?: boolean;
+	onOpenChange?: (open: boolean) => void;
+}) {
+	const [localOpen, setLocalOpen] = useState(false);
+	const open = controlledOpen ?? localOpen;
+	const setOpen = onOpenChange ?? setLocalOpen;
 	const [href, setHref] = useState("");
+	// Re-read the link when the popover is opened from outside (⌘K).
+	useEffect(() => {
+		if (open) setHref(String(editor.getAttributes("link").href ?? ""));
+	}, [open, editor]);
 	const active = useEditorState({
 		editor,
 		selector: ({ editor: e }) => e.isActive("link"),
@@ -161,13 +191,7 @@ export function LinkPopover({ editor }: { editor: Editor }) {
 	}
 
 	return (
-		<Popover
-			open={open}
-			onOpenChange={(next) => {
-				if (next) setHref(String(editor.getAttributes("link").href ?? ""));
-				setOpen(next);
-			}}
-		>
+		<Popover open={open} onOpenChange={setOpen}>
 			<Tooltip>
 				<TooltipTrigger asChild>
 					<PopoverTrigger asChild>
@@ -202,6 +226,17 @@ export function LinkPopover({ editor }: { editor: Editor }) {
 					<Button type="submit" size="sm">
 						Apply
 					</Button>
+					{active && href && (
+						<Button
+							type="button"
+							size="icon-sm"
+							variant="ghost"
+							aria-label="Open link in a new tab"
+							onClick={() => window.open(href, "_blank", "noopener")}
+						>
+							<ExternalLink />
+						</Button>
+					)}
 					{active && (
 						<Button
 							type="button"
@@ -227,6 +262,7 @@ export function LinkPopover({ editor }: { editor: Editor }) {
 	);
 }
 
+// Content colours are document data (stored in the JSON / HTML), so they are literal values.
 const TEXT_COLORS = [
 	{ label: "Default", value: null },
 	{ label: "Magenta", value: "#c71e63" },
@@ -236,7 +272,7 @@ const TEXT_COLORS = [
 	{ label: "Muted", value: "#777777" },
 ];
 
-const HIGHLIGHTS = [
+const BACKGROUNDS = [
 	{ label: "None", value: null },
 	{ label: "Pink", value: "#feebf2" },
 	{ label: "Lavender", value: "#eceffb" },
@@ -261,7 +297,28 @@ function Swatch({
 	);
 }
 
-/** Text colour (TextStyle + Color) and multicolour Highlight. */
+/** Native colour input for "unlimited colours" (Color / BackgroundColor accept any CSS colour). */
+function CustomColor({
+	label,
+	onPick,
+}: {
+	label: string;
+	onPick: (color: string) => void;
+}) {
+	return (
+		<label className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent">
+			<input
+				type="color"
+				className="size-5 cursor-pointer rounded-sm border-0 bg-transparent p-0"
+				aria-label={label}
+				onChange={(event) => onPick(event.target.value)}
+			/>
+			{label}
+		</label>
+	);
+}
+
+/** Text colour (Color), text background (BackgroundColor) and multicolour Highlight mark. */
 export function ColorMenu({ editor }: { editor: Editor }) {
 	return (
 		<DropdownMenu>
@@ -278,9 +335,15 @@ export function ColorMenu({ editor }: { editor: Editor }) {
 						</Button>
 					</DropdownMenuTrigger>
 				</TooltipTrigger>
-				<TooltipContent side="bottom">Colour & highlight</TooltipContent>
+				<TooltipContent side="bottom">
+					Colour, background & highlight
+				</TooltipContent>
 			</Tooltip>
-			<DropdownMenuContent align="start" className="w-48">
+			<DropdownMenuContent
+				onCloseAutoFocus={keepEditorFocus}
+				align="start"
+				className="max-h-[70vh] w-56 overflow-y-auto"
+			>
 				<DropdownMenuLabel className="eyebrow">Text colour</DropdownMenuLabel>
 				{TEXT_COLORS.map((color) => (
 					<DropdownMenuItem
@@ -297,9 +360,39 @@ export function ColorMenu({ editor }: { editor: Editor }) {
 						{color.label}
 					</DropdownMenuItem>
 				))}
+				<CustomColor
+					label="Custom text colour…"
+					onPick={(color) => editor.chain().focus().setColor(color).run()}
+				/>
 				<DropdownMenuSeparator />
-				<DropdownMenuLabel className="eyebrow">Highlight</DropdownMenuLabel>
-				{HIGHLIGHTS.map((color) => (
+				<DropdownMenuLabel className="eyebrow">
+					Background (text style)
+				</DropdownMenuLabel>
+				{BACKGROUNDS.map((color) => (
+					<DropdownMenuItem
+						key={color.label}
+						data-testid={`tiptap-bg-${color.label.toLowerCase()}`}
+						onSelect={() =>
+							color.value
+								? editor.chain().focus().setBackgroundColor(color.value).run()
+								: editor.chain().focus().unsetBackgroundColor().run()
+						}
+					>
+						<Swatch color={color.value} />
+						{color.label}
+					</DropdownMenuItem>
+				))}
+				<CustomColor
+					label="Custom background…"
+					onPick={(color) =>
+						editor.chain().focus().setBackgroundColor(color).run()
+					}
+				/>
+				<DropdownMenuSeparator />
+				<DropdownMenuLabel className="eyebrow">
+					Highlight (mark)
+				</DropdownMenuLabel>
+				{BACKGROUNDS.map((color) => (
 					<DropdownMenuItem
 						key={color.label}
 						onSelect={() =>
@@ -320,5 +413,29 @@ export function ColorMenu({ editor }: { editor: Editor }) {
 				))}
 			</DropdownMenuContent>
 		</DropdownMenu>
+	);
+}
+
+/** RubyText: asks for the annotation, then wraps the selection in <ruby>. */
+export function RubyButton({
+	editor,
+	onPrompt,
+}: {
+	editor: Editor;
+	onPrompt: (initial: string) => void;
+}) {
+	const active = useEditorState({
+		editor,
+		selector: ({ editor: e }) => e.isActive("rubyText"),
+	});
+	return (
+		<ToolbarButton
+			label="Ruby annotation (furigana)"
+			active={active}
+			data-testid="tiptap-ruby"
+			onRun={() => onPrompt(String(editor.getAttributes("rubyText").rt ?? ""))}
+		>
+			<Languages />
+		</ToolbarButton>
 	);
 }

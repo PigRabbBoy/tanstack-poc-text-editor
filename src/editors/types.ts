@@ -37,6 +37,21 @@ export type FeatureSupport = {
 	note?: string;
 };
 
+/**
+ * One official tool of an editor: a plugin, extension, kit, block, menu or feature listed in its docs.
+ * `included` means it is wired into this page and can be tried there.
+ */
+export type ToolEntry = {
+	name: string;
+	/** npm package or registry item that provides it. */
+	source?: string;
+	status: "included" | "excluded";
+	/** Required when excluded: why it is not on the page (AI, collaboration, paid, broken…). */
+	reason?: string;
+	/** How to find or trigger it on the page, e.g. "Slash menu → Callout". */
+	howTo?: string;
+};
+
 export type EditorMeta = {
 	id: EditorId;
 	name: string;
@@ -51,6 +66,8 @@ export type EditorMeta = {
 	showcase: string[];
 	/** Surprises found while building the POC. */
 	findings: string[];
+	/** Every official tool/feature from the editor's docs, and whether this page includes it. */
+	inventory: ToolEntry[];
 };
 
 export type EditorModule = {

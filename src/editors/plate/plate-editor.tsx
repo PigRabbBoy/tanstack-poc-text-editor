@@ -6,7 +6,7 @@ import { Editor, EditorContainer } from "@/editors/plate/ui/editor";
 import { TooltipProvider } from "@/editors/plate/ui/tooltip";
 import type { EditorProps } from "@/editors/types";
 import { EditorKit } from "./editor-kit";
-import { PlateShowcase } from "./showcase";
+import { PlateExtras } from "./showcase";
 import { toSnapshot } from "./snapshot";
 
 const SNAPSHOT_DELAY_MS = 120;
@@ -56,12 +56,12 @@ export default function PlateEditor({
 					<EditorContainer className="h-[calc(100vh-14rem)] min-h-[60vh] rounded-xl border bg-card shadow-card">
 						<Editor
 							variant="none"
-							className="min-h-full px-14 pt-6 pb-40 text-base leading-[1.8]"
+							className="min-h-full px-14 pt-6 pb-40 text-base leading-[1.8] [&_[data-nav-target]]:rounded-md [&_[data-nav-target]]:bg-muted [&_[data-nav-target]]:transition-colors"
 							placeholder="Type / for commands, @ to mention, {{ for a variable…"
 						/>
 					</EditorContainer>
 				</Plate>
-				<PlateShowcase editor={editor} />
+				<PlateExtras editor={editor} />
 			</div>
 		</TooltipProvider>
 	);
