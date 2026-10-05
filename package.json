@@ -7,7 +7,7 @@
 		"build": "vite build",
 		"preview": "vite preview",
 		"generate-routes": "tsr generate",
-		"typecheck": "tsr generate && tsc --noEmit",
+		"typecheck": "tsc --noEmit",
 		"format": "biome format --write",
 		"lint": "biome lint",
 		"check": "biome check",
