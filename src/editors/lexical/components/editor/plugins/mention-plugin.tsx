@@ -6,9 +6,11 @@ import {
 	type MenuTextMatch,
 	useBasicTypeaheadTriggerMatch,
 } from "@lexical/react/LexicalTypeaheadMenuPlugin";
-import type { TextNode } from "lexical";
+import { $createTextNode, type TextNode } from "lexical";
 import { User } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+
+import { type MentionUser, USERS } from "@/data/users";
 
 import { $createMentionNode } from "@/editors/lexical/components/editor/nodes/mention-node";
 import { useLanguage } from "@/editors/lexical/components/editor/plugins/i18n-plugin";
@@ -65,105 +67,20 @@ const AtSignMentionsRegexAliasRegex = new RegExp(
 		")$",
 );
 
-const MENTIONS = [
-	"Aayla Secura",
-	"Admiral Gial Ackbar",
-	"Ahsoka Tano",
-	"Anakin Skywalker",
-	"Asajj Ventress",
-	"BB-8",
-	"Bail Organa",
-	"Beru Lars",
-	"Boba Fett",
-	"Bodhi Rook",
-	"C-3PO",
-	"Captain Phasma",
-	"Captain Rex",
-	"Cassian Andor",
-	"Chewbacca",
-	"Chirrut Îmwe",
-	"Count Dooku",
-	"Darth Maul",
-	"Darth Vader",
-	"Ezra Bridger",
-	"Finn",
-	"Galen Erso",
-	"General Grievous",
-	"Grand Moff Tarkin",
-	"Greedo",
-	"Han Solo",
-	"Hera Syndulla",
-	"Jabba the Hutt",
-	"Jango Fett",
-	"Jar Jar Binks",
-	"Jyn Erso",
-	"K-2SO",
-	"Kanan Jarrus",
-	"Ki-Adi-Mundi",
-	"Kit Fisto",
-	"Kylo Ren",
-	"Lando Calrissian",
-	"Leia Organa",
-	"Luke Skywalker",
-	"Mace Windu",
-	"Maz Kanata",
-	"Mon Mothma",
-	"Obi-Wan Kenobi",
-	"Owen Lars",
-	"Padmé Amidala",
-	"Plo Koon",
-	"Poe Dameron",
-	"Qui-Gon Jinn",
-	"R2-D2",
-	"Rey",
-	"Rose Tico",
-	"Sabine Wren",
-	"Saw Gerrera",
-	"Sheev Palpatine",
-	"Shmi Skywalker",
-	"Wedge Antilles",
-	"Yoda",
-];
-
-const mentionsCache = new Map<string, string[] | null>();
-
-const lookupService = {
-	search(query: string, callback: (results: string[]) => void): void {
-		setTimeout(() => {
-			const results = MENTIONS.filter((mention) =>
-				mention.toLowerCase().includes(query.toLowerCase()),
-			);
-			callback(results);
-		}, 250);
-	},
-};
-
-function useMentionLookupService(mentionString: string | null) {
-	const [results, setResults] = useState<string[]>([]);
-
-	useEffect(() => {
+// POC: suggestions come from the shared USERS list (synchronous, no lookup service).
+function useMentionLookupService(mentionString: string | null): MentionUser[] {
+	return useMemo(() => {
 		if (mentionString === null) {
-			setResults([]);
-			return;
+			return [];
 		}
-
-		const cachedResults = mentionsCache.get(mentionString);
-		if (cachedResults === null) {
-			return;
-		}
-		if (cachedResults !== undefined) {
-			setResults(cachedResults);
-			return;
-		}
-
-		mentionsCache.set(mentionString, null);
-		lookupService.search(mentionString, (newResults) => {
-			mentionsCache.set(mentionString, newResults);
-			setResults(newResults);
-		});
+		const query = mentionString.toLowerCase();
+		return USERS.filter(
+			(user) =>
+				user.name.toLowerCase().includes(query) ||
+				user.id.toLowerCase() === query ||
+				user.role.toLowerCase().includes(query),
+		);
 	}, [mentionString]);
-
-	return results;
 }
 
 function checkForAtSignMentions(
@@ -191,10 +108,12 @@ function checkForAtSignMentions(
 
 class MentionTypeaheadOption extends MenuOption {
 	name: string;
+	user: MentionUser;
 
-	constructor(name: string) {
-		super(name);
-		this.name = name;
+	constructor(user: MentionUser) {
+		super(user.id);
+		this.name = user.name;
+		this.user = user;
 	}
 }
 
@@ -209,7 +128,7 @@ export function MentionPlugin() {
 		() =>
 			results
 				.slice(0, MAX_SUGGESTIONS)
-				.map((result) => new MentionTypeaheadOption(result)),
+				.map((user) => new MentionTypeaheadOption(user)),
 		[results],
 	);
 
@@ -220,11 +139,13 @@ export function MentionPlugin() {
 			closeMenu: () => void,
 		) => {
 			editor.update(() => {
-				const mentionNode = $createMentionNode(option.name);
+				const mentionNode = $createMentionNode(option.user.name, option.user.id);
 				if (nodeToReplace) {
 					nodeToReplace.replace(mentionNode);
 				}
-				mentionNode.select();
+				const space = $createTextNode(" ");
+				mentionNode.insertAfter(space);
+				space.select();
 				closeMenu();
 			});
 		},
@@ -282,11 +203,11 @@ export function MentionPlugin() {
 									value={
 										selectedIndex === null
 											? ""
-											: (options[selectedIndex]?.name ?? "")
+											: (options[selectedIndex]?.key ?? "")
 									}
 									onValueChange={(nextValue) => {
 										const index = options.findIndex(
-											(option) => option.name === nextValue,
+											(option) => option.key === nextValue,
 										);
 										if (index >= 0) {
 											setHighlightedIndex(index);
@@ -294,16 +215,19 @@ export function MentionPlugin() {
 									}}
 									shouldFilter={false}
 								>
-									<CommandList className="max-h-64 w-56">
+									<CommandList className="max-h-64 w-72">
 										{options.map((option) => (
 											<CommandItem
 												key={option.key}
 												ref={option.setRefElement}
-												value={option.name}
+												value={option.key}
 												onSelect={() => selectOptionAndCleanUp(option)}
 											>
 												<User className="size-4 text-muted-foreground" />
 												<span className="truncate">{option.name}</span>
+												<span className="ms-auto truncate text-xs text-muted-foreground">
+													{option.user.role}
+												</span>
 											</CommandItem>
 										))}
 									</CommandList>

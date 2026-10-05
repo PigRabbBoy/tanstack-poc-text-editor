@@ -3,6 +3,9 @@ import { useLexicalEditable } from "@lexical/react/useLexicalEditable";
 import { $getRoot, $getSelection } from "lexical";
 import { Image } from "lucide-react";
 import { useCallback, useRef } from "react";
+import { toast } from "sonner";
+
+import { fileToDataUrl } from "@/lib/image";
 
 import { INSERT_IMAGE_COMMAND } from "@/editors/lexical/components/editor/nodes/image-node";
 import { useTranslation } from "@/editors/lexical/components/editor/plugins/i18n-plugin";
@@ -13,12 +16,11 @@ import {
 	TooltipTrigger,
 } from "@/editors/lexical/ui/tooltip";
 
+// POC: images are stored inline as base64 data URLs with a 1 MB cap.
 function readFileAsDataUrl(file: File): Promise<string> {
-	return new Promise((resolve, reject) => {
-		const reader = new FileReader();
-		reader.onload = () => resolve(reader.result as string);
-		reader.onerror = () => reject(reader.error);
-		reader.readAsDataURL(file);
+	return fileToDataUrl(file).catch((error: unknown) => {
+		toast.error(error instanceof Error ? error.message : "Could not read image");
+		throw error;
 	});
 }
 
@@ -47,7 +49,7 @@ export function useImageFilePicker() {
 					altText: file.name,
 					src,
 				});
-			});
+			}, () => {});
 		},
 		[editor],
 	);

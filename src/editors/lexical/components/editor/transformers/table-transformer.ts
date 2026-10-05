@@ -44,22 +44,35 @@ function getTableColumnsSize(table: TableNode) {
 	return $isTableRowNode(row) ? row.getChildrenSize() : 0;
 }
 
-function $createTableCell(textContent: string): TableCellNode {
+function $createTableCell(
+	textContent: string,
+	cellTransformers: Transformer[] = CELL_TRANSFORMERS,
+): TableCellNode {
 	textContent = textContent.replace(/\\n/g, "\n");
 	const cell = $createTableCellNode(TableCellHeaderStates.NO_STATUS);
-	$convertFromMarkdownString(textContent.trim(), CELL_TRANSFORMERS, cell);
+	$convertFromMarkdownString(textContent.trim(), cellTransformers, cell);
 	return cell;
 }
 
-function mapToTableCells(textContent: string): TableCellNode[] | null {
+function mapToTableCells(
+	textContent: string,
+	cellTransformers: Transformer[] = CELL_TRANSFORMERS,
+): TableCellNode[] | null {
 	const match = textContent.match(TABLE_ROW_REG_EXP);
 	if (!match || !match[1]) {
 		return null;
 	}
-	return match[1].split("|").map((text) => $createTableCell(text));
+	return match[1]
+		.split("|")
+		.map((text) => $createTableCell(text, cellTransformers));
 }
 
-export const TABLE: ElementTransformer = {
+// POC: factory so the app can add its own text-match transformers
+// (variables, mentions) to table cells.
+export function createTableTransformer(
+	cellTransformers: Transformer[] = CELL_TRANSFORMERS,
+): ElementTransformer {
+	return {
 	dependencies: [TableNode, TableRowNode, TableCellNode],
 	export: (node: LexicalNode) => {
 		if (!$isTableNode(node)) {
@@ -79,7 +92,7 @@ export const TABLE: ElementTransformer = {
 			for (const cell of row.getChildren()) {
 				if ($isTableCellNode(cell)) {
 					rowOutput.push(
-						$convertToMarkdownString(CELL_TRANSFORMERS, cell).replace(
+						$convertToMarkdownString(cellTransformers, cell).replace(
 							/\n/g,
 							"\\n",
 						),
@@ -125,7 +138,7 @@ export const TABLE: ElementTransformer = {
 			return;
 		}
 
-		const matchCells = mapToTableCells(match[0]);
+		const matchCells = mapToTableCells(match[0], cellTransformers);
 		if (matchCells == null) {
 			return;
 		}
@@ -144,7 +157,10 @@ export const TABLE: ElementTransformer = {
 				break;
 			}
 
-			const cells = mapToTableCells(firstChild.getTextContent());
+			const cells = mapToTableCells(
+				firstChild.getTextContent(),
+				cellTransformers,
+			);
 			if (cells == null) {
 				break;
 			}
@@ -162,7 +178,9 @@ export const TABLE: ElementTransformer = {
 			const tableRow = $createTableRowNode();
 			table.append(tableRow);
 			for (let i = 0; i < maxCells; i++) {
-				tableRow.append(i < cells.length ? cells[i] : $createTableCell(""));
+				tableRow.append(
+					i < cells.length ? cells[i] : $createTableCell("", cellTransformers),
+				);
 			}
 		}
 
@@ -180,4 +198,7 @@ export const TABLE: ElementTransformer = {
 		table.selectEnd();
 	},
 	type: "element",
-};
+	};
+}
+
+export const TABLE: ElementTransformer = createTableTransformer();

@@ -201,7 +201,7 @@ export function ComponentPicker({ children }: { children: React.ReactNode }) {
 										}}
 										shouldFilter={false}
 									>
-										<CommandList className="max-h-64 w-56">
+										<CommandList className="max-h-72 w-64">
 											{options.map((option) => (
 												<CommandItem
 													key={option.key}

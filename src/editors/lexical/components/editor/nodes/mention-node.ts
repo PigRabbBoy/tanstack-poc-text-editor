@@ -1,3 +1,6 @@
+// Vendored from @shadcn-editor/editor-x (MIT) and adapted for the POC:
+// the node carries a user id and exports the shared mention convention
+// `<span data-type="mention" data-id="u1">@Label</span>`.
 import {
 	$applyNodeReplacement,
 	$getDocument,
@@ -15,19 +18,27 @@ import {
 } from "lexical";
 
 export const MENTION_CLASS_NAME =
-	"editor-mention rounded bg-primary/10 px-1 text-primary";
+	"editor-mention rounded-sm bg-accent px-1 font-medium text-primary-text";
 
 export type SerializedMentionNode = Spread<
-	{ mentionName: string },
+	{ mentionName: string; mentionId: string },
 	SerializedTextNode
 >;
 
 export class MentionNode extends TextNode {
+	/** Display label without the leading "@". */
 	__mention: string;
+	__mentionId: string;
 
-	constructor(mentionName: string = "", text?: string, key?: NodeKey) {
-		super(text ?? mentionName, key);
+	constructor(
+		mentionName: string = "",
+		text?: string,
+		key?: NodeKey,
+		mentionId: string = "",
+	) {
+		super(text ?? `@${mentionName}`, key);
 		this.__mention = mentionName;
+		this.__mentionId = mentionId;
 	}
 
 	$config() {
@@ -37,29 +48,33 @@ export class MentionNode extends TextNode {
 	afterCloneFrom(prevNode: this): void {
 		super.afterCloneFrom(prevNode);
 		this.__mention = prevNode.__mention;
+		this.__mentionId = prevNode.__mentionId;
 	}
 
 	createDOM(config: EditorConfig): HTMLElement {
 		const dom = super.createDOM(config);
 		addClassNamesToElement(dom, MENTION_CLASS_NAME);
+		dom.setAttribute("data-type", "mention");
+		dom.setAttribute("data-id", this.__mentionId);
 		dom.spellcheck = false;
 		return dom;
 	}
 
 	exportDOM(): DOMExportOutput {
 		const element = $getDocument().createElement("span");
-		element.setAttribute("data-lexical-mention", "true");
-		if (this.__text !== this.__mention) {
-			element.setAttribute("data-lexical-mention-name", this.__mention);
-		}
-		element.textContent = this.__text;
+		element.setAttribute("data-type", "mention");
+		element.setAttribute("data-id", this.__mentionId);
+		element.textContent = `@${this.__mention}`;
 		return { element };
 	}
 
 	static importDOM(): DOMConversionMap | null {
 		return {
 			span: (domNode: HTMLElement) => {
-				if (!domNode.hasAttribute("data-lexical-mention")) {
+				if (
+					domNode.getAttribute("data-type") !== "mention" &&
+					!domNode.hasAttribute("data-lexical-mention")
+				) {
 					return null;
 				}
 				return {
@@ -80,18 +95,30 @@ export class MentionNode extends TextNode {
 		return this.getLatest().__mention;
 	}
 
+	setMentionId(mentionId: string): this {
+		const self = this.getWritable();
+		self.__mentionId = mentionId;
+		return self;
+	}
+
+	getMentionId(): string {
+		return this.getLatest().__mentionId;
+	}
+
 	updateFromJSON(
 		serializedNode: LexicalUpdateJSON<SerializedMentionNode>,
 	): this {
 		return super
 			.updateFromJSON(serializedNode)
-			.setMention(serializedNode.mentionName);
+			.setMention(serializedNode.mentionName)
+			.setMentionId(serializedNode.mentionId ?? "");
 	}
 
 	exportJSON(): SerializedMentionNode {
 		return {
 			...super.exportJSON(),
 			mentionName: this.__mention,
+			mentionId: this.__mentionId,
 		};
 	}
 
@@ -110,9 +137,11 @@ export class MentionNode extends TextNode {
 
 function $convertMentionElement(domNode: HTMLElement): DOMConversionOutput {
 	const textContent = domNode.textContent ?? "";
+	const label = textContent.replace(/^@/, "");
 	const mentionName =
-		domNode.getAttribute("data-lexical-mention-name") ?? textContent;
-	return { node: $createMentionNode(mentionName, textContent) };
+		domNode.getAttribute("data-lexical-mention-name") ?? label;
+	const mentionId = domNode.getAttribute("data-id") ?? "";
+	return { node: $createMentionNode(mentionName, mentionId) };
 }
 
 export function $isMentionNode(
@@ -123,9 +152,14 @@ export function $isMentionNode(
 
 export function $createMentionNode(
 	mentionName: string,
-	textContent?: string,
+	mentionId: string = "",
 ): MentionNode {
-	const node = new MentionNode(mentionName, textContent);
+	const node = new MentionNode(
+		mentionName,
+		`@${mentionName}`,
+		undefined,
+		mentionId,
+	);
 	node.setMode("segmented").toggleDirectionless();
 	return $applyNodeReplacement(node);
 }

@@ -1,6 +1,9 @@
 import { DRAG_DROP_PASTE } from "@lexical/rich-text";
-import { isMimeType, mediaFileReader } from "@lexical/utils";
+import { isMimeType } from "@lexical/utils";
 import { COMMAND_PRIORITY_LOW, defineExtension } from "lexical";
+import { toast } from "sonner";
+
+import { fileToDataUrl } from "@/lib/image";
 
 import { ImageExtension } from "@/editors/lexical/components/editor/extensions/image";
 import { INSERT_IMAGE_COMMAND } from "@/editors/lexical/components/editor/nodes/image-node";
@@ -21,16 +24,21 @@ export const DragDropPasteExtension = defineExtension({
 			DRAG_DROP_PASTE,
 			(files) => {
 				(async () => {
-					const filesResult = await mediaFileReader(
-						files,
-						ACCEPTABLE_IMAGE_TYPES,
-					);
-					for (const { file, result } of filesResult) {
-						if (isMimeType(file, ACCEPTABLE_IMAGE_TYPES)) {
+					// POC: route through fileToDataUrl so the 1 MB cap applies.
+					for (const file of files) {
+						if (!isMimeType(file, ACCEPTABLE_IMAGE_TYPES)) {
+							continue;
+						}
+						try {
+							const src = await fileToDataUrl(file);
 							editor.dispatchCommand(INSERT_IMAGE_COMMAND, {
 								altText: file.name,
-								src: result,
+								src,
 							});
+						} catch (error) {
+							toast.error(
+								error instanceof Error ? error.message : "Could not read image",
+							);
 						}
 					}
 				})();
