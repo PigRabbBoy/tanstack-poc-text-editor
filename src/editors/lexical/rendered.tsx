@@ -3,6 +3,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
 import { defineExtension } from "lexical";
 import { useEffect, useMemo, useRef } from "react";
+import { STICKY_LAYER_ATTRIBUTE } from "@/editors/lexical/components/playground/sticky";
 import type { RenderedProps } from "@/editors/types";
 import { CONTENT_EXTENSIONS } from "./extensions";
 import { editorTheme } from "./theme";
@@ -51,11 +52,13 @@ export default function Rendered({ json }: RenderedProps) {
 		<LexicalExtensionComposer
 			extension={extension}
 			contentEditable={
-				<ContentEditable
-					className="text-base leading-7 outline-none"
-					aria-label="Rendered document"
-					data-testid="lexical-rendered"
-				/>
+				<div className="relative" {...{ [STICKY_LAYER_ATTRIBUTE]: "" }}>
+					<ContentEditable
+						className="text-base leading-7 outline-none"
+						aria-label="Rendered document"
+						data-testid="lexical-rendered"
+					/>
+				</div>
 			}
 		>
 			<SyncStatePlugin json={json} />

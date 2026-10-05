@@ -1,15 +1,24 @@
-import { defineExtension, TextNode } from "lexical";
+import { effect, namedSignals } from "@lexical/extension";
+import { defineExtension, safeCast, TextNode } from "lexical";
 
 import {
 	$createSpecialTextNode,
 	SpecialTextNode,
 } from "@/editors/lexical/components/editor/nodes/special-text-node";
 
-const BRACKETED_TEXT_REGEX = /\[([^[\]]+)\]/;
+/**
+ * POC change: the registry matched any `[text]`, which turned the label of a
+ * typed markdown link `[docs](…)` or mention `[@Name](mention:id)` into a
+ * special-text node before the `(` arrived. Now `[text]` only converts once a
+ * whitespace follows the `]`, never for `[@…]`, `[ ]`/`[x]` (task syntax) or a
+ * bracket followed by `(`; and the extension is opt-in through a `disabled`
+ * signal (default true), like the playground's SpecialTextExtension.
+ */
+const BRACKETED_TEXT_REGEX = /\[([^[\]@\s][^[\]]*)\](?=\s)/;
 
 function $findAndTransformText(node: TextNode): TextNode | null {
 	const match = BRACKETED_TEXT_REGEX.exec(node.getTextContent());
-	if (match === null) {
+	if (match === null || match[1] === undefined || /^[xX ]$/.test(match[1])) {
 		return null;
 	}
 
@@ -35,9 +44,20 @@ function $specialTextNodeTransform(node: TextNode): void {
 	}
 }
 
+export interface SpecialTextConfig {
+	disabled: boolean;
+}
+
 export const SpecialTextExtension = defineExtension({
 	name: "@shadcn-editor/editor/SpecialText",
+	build: (_editor, config) => namedSignals(config),
+	config: safeCast<SpecialTextConfig>({ disabled: true }),
 	nodes: () => [SpecialTextNode],
-	register: (editor) =>
-		editor.registerNodeTransform(TextNode, $specialTextNodeTransform),
+	register: (editor, _config, state) =>
+		effect(() => {
+			if (state.getOutput().disabled.value) {
+				return;
+			}
+			return editor.registerNodeTransform(TextNode, $specialTextNodeTransform);
+		}),
 });

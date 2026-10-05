@@ -1,10 +1,16 @@
 import { $generateHtmlFromNodes } from "@lexical/html";
-import { registerMarkdownShortcuts } from "@lexical/markdown";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
+import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
-import { defineExtension, type LexicalEditor } from "lexical";
+import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
+import { NodeEventPlugin } from "@lexical/react/LexicalNodeEventPlugin";
+import { useLexicalFocusManagerRef } from "@lexical/react/useLexicalFocusManagerRef";
+import { useLexicalRovingTabIndexRef } from "@lexical/react/useLexicalRovingTabIndexRef";
+import { $getNodeByKey, defineExtension, type LexicalEditor } from "lexical";
 import { Sparkles } from "lucide-react";
-import { useEffect, useMemo, useRef } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef } from "react";
+import { toast } from "sonner";
+import { VARIABLES } from "@/data/variables";
 import { ActivityBar } from "@/editors/lexical/components/editor/plugins/activitybar/activitybar-plugin";
 import { CountPlugin } from "@/editors/lexical/components/editor/plugins/activitybar/count-plugin";
 import { ReadOnlyTogglePlugin } from "@/editors/lexical/components/editor/plugins/activitybar/read-only-toggle-plugin";
@@ -44,10 +50,16 @@ import { ContentEditable } from "@/editors/lexical/components/editor/plugins/con
 import { ContextMenuPlugin } from "@/editors/lexical/components/editor/plugins/context-menu-plugin";
 import { DraggableBlockPlugin } from "@/editors/lexical/components/editor/plugins/draggable-block-plugin";
 import { EmojiPickerPlugin } from "@/editors/lexical/components/editor/plugins/emoji-picker-plugin";
+import { CommentPlugin } from "@/editors/lexical/components/editor/plugins/floating/comment-plugin";
 import { FloatingToolbarPlugin } from "@/editors/lexical/components/editor/plugins/floating/floating-toolbar-plugin";
 import { LinkEditorPlugin } from "@/editors/lexical/components/editor/plugins/floating/link-editor-plugin";
 import { RubyEditorPlugin } from "@/editors/lexical/components/editor/plugins/floating/ruby-editor-plugin";
 import { TableHoverActionsPlugin } from "@/editors/lexical/components/editor/plugins/floating/table-hover-actions-plugin";
+import {
+	LanguageProvider,
+	LanguageSelectorPlugin,
+	useLanguage,
+} from "@/editors/lexical/components/editor/plugins/i18n-plugin";
 import { MentionPlugin } from "@/editors/lexical/components/editor/plugins/mention-plugin";
 import { BlockFormatToolbarPlugin } from "@/editors/lexical/components/editor/plugins/toolbar/block-format-toolbar-plugin";
 import { ClearToolbarPlugin } from "@/editors/lexical/components/editor/plugins/toolbar/clear-toolbar-plugin";
@@ -63,12 +75,33 @@ import { LinkToolbarPlugin } from "@/editors/lexical/components/editor/plugins/t
 import { RubyToolbarPlugin } from "@/editors/lexical/components/editor/plugins/toolbar/ruby-toolbar-plugin";
 import { TextFormatToolbarPlugin } from "@/editors/lexical/components/editor/plugins/toolbar/text-format-toolbar-plugin";
 import { Toolbar } from "@/editors/lexical/components/editor/plugins/toolbar/toolbar-plugin";
+import { CodeActionMenuPlugin } from "@/editors/lexical/components/playground/code-action-menu";
+import { LexicalNodeContextMenu } from "@/editors/lexical/components/playground/dev-tools";
+import { ExcalidrawPlugin } from "@/editors/lexical/components/playground/excalidraw";
+import { InlineImagePlugin } from "@/editors/lexical/components/playground/inline-image";
+import { STICKY_LAYER_ATTRIBUTE } from "@/editors/lexical/components/playground/sticky";
+import { TableActionMenuPlugin } from "@/editors/lexical/components/playground/table-action-menu";
+import { TableCellResizerPlugin } from "@/editors/lexical/components/playground/table-cell-resizer";
+import { TableFitNestedTablePlugin } from "@/editors/lexical/components/playground/table-fit-nested";
+import { TableScrollShadowPlugin } from "@/editors/lexical/components/playground/table-scroll-shadow";
+import { ButtonGroup } from "@/editors/lexical/ui/button-group";
+import { DirectionProvider } from "@/editors/lexical/ui/direction";
 import type { EditorProps, Snapshot } from "@/editors/types";
+import { PlaygroundActions } from "./actions";
 import { EDITOR_EXTENSIONS } from "./extensions";
+import { PlaygroundInsertButtons, PlaygroundPickerPlugin } from "./inserts";
+import { LabPanels, LexicalLab } from "./lab";
 import { $exportMarkdown, $importMarkdown } from "./markdown";
 import { meta } from "./meta";
+import {
+	LabSettingsProvider,
+	LabSettingsSync,
+	useLabSettings,
+} from "./settings";
+import { CaretOffsetStatus, CharacterLimit } from "./status";
 import { editorTheme } from "./theme";
 import { EDITOR_TRANSFORMERS } from "./transformers";
+import { $isVariableNode, VariableNode } from "./variable-node";
 import {
 	VariablePickerPlugin,
 	VariableTypeaheadPlugin,
@@ -100,6 +133,68 @@ function SnapshotPlugin({ onChange }: Pick<EditorProps, "onChange">) {
 	return null;
 }
 
+/** Double-clicking a variable chip shows its sample value (official NodeEventPlugin). */
+function VariableDetailsPlugin() {
+	return (
+		<NodeEventPlugin
+			nodeType={VariableNode}
+			eventType="dblclick"
+			eventListener={(_event, editor, nodeKey) => {
+				const name = editor.read(() => {
+					const node = $getNodeByKey(nodeKey);
+					return $isVariableNode(node) ? node.getName() : null;
+				});
+				const variable = VARIABLES.find((item) => item.name === name);
+				if (variable) {
+					toast.info(`{{${variable.name}}} — ${variable.label}`, {
+						description: `Sample value: ${variable.sample}`,
+					});
+				}
+			}}
+		/>
+	);
+}
+
+/** RTL/LTR follows the registry's language selector (DirectionProvider from shadcn). */
+function EditorWrapper({ children }: { children: ReactNode }) {
+	const { language, dir } = useLanguage();
+	return (
+		<DirectionProvider direction={dir}>
+			<div
+				dir={dir}
+				lang={language}
+				className="relative flex min-h-[60vh] w-full flex-col overflow-hidden rounded-xl border bg-card shadow-card"
+				data-testid="lexical-editor"
+			>
+				{children}
+			</div>
+		</DirectionProvider>
+	);
+}
+
+/** Toolbar with @lexical/a11y focus management: Alt+F10 jumps here, arrows rove. */
+function AccessibleToolbar({ children }: { children: ReactNode }) {
+	const focusRef = useLexicalFocusManagerRef({
+		toolbarItemSelector: "button:not([disabled])",
+	});
+	const rovingRef = useLexicalRovingTabIndexRef({
+		itemSelector: "button:not([disabled])",
+		orientation: "horizontal",
+	});
+	const ref = useCallback(
+		(element: HTMLDivElement | null) => {
+			focusRef(element);
+			rovingRef(element);
+		},
+		[focusRef, rovingRef],
+	);
+	return (
+		<Toolbar ref={ref} className="sticky top-0 z-10 bg-muted/60">
+			{children}
+		</Toolbar>
+	);
+}
+
 function Showcase() {
 	return (
 		<details className="border-t px-4 py-3 text-sm" data-testid="showcase">
@@ -112,6 +207,137 @@ function Showcase() {
 				))}
 			</ul>
 		</details>
+	);
+}
+
+/** Exposes the editor for debugging (`window.__lexicalPocEditor`), via EditorRefPlugin. */
+function exposeEditor(editor: LexicalEditor | null) {
+	(
+		window as unknown as { __lexicalPocEditor?: LexicalEditor | null }
+	).__lexicalPocEditor = editor;
+}
+
+function EditorBody({ onChange }: Pick<EditorProps, "onChange">) {
+	const { settings } = useLabSettings();
+
+	return (
+		<EditorWrapper>
+			<AccessibleToolbar>
+				<HistoryToolbarPlugin />
+				<BlockFormatToolbarPlugin />
+				<FontFamilyToolbarPlugin />
+				<FontSizeToolbarPlugin />
+				<ColorToolbarPlugin />
+				<TextFormatToolbarPlugin formats="all" />
+				<LinkToolbarPlugin />
+				<RubyToolbarPlugin />
+				<ElementFormatToolbarPlugin formats="basic" />
+				<IndentToolbarPlugin />
+				<BlockInsert>
+					<InsertCodeBlockPlugin />
+					<InsertColumnsPlugin />
+					<InsertEmojiPlugin />
+					<InsertEquationPlugin />
+					<InsertHorizontalRulePlugin />
+					<InsertImagePlugin />
+					<InsertTablePlugin />
+					<InsertYouTubePlugin />
+					<InsertTwitterPlugin />
+					<InsertFigmaPlugin />
+				</BlockInsert>
+				<ButtonGroup>
+					<PlaygroundInsertButtons />
+				</ButtonGroup>
+				<FindReplaceToolbarPlugin />
+				<ClearToolbarPlugin />
+				<ImportExportToolbarPlugin transformers={EDITOR_TRANSFORMERS} />
+			</AccessibleToolbar>
+			<div
+				className="relative min-w-0 flex-1"
+				{...{ [STICKY_LAYER_ATTRIBUTE]: "" }}
+			>
+				<ContentEditable
+					data-testid="lexical-content"
+					variant="draggable"
+					className="lexical-poc-content min-h-[55vh] text-base leading-7"
+					placeholder={{
+						en: "Type “/” for blocks, “@” to mention, “{{” for a variable…",
+					}}
+				/>
+				<DraggableBlockPlugin />
+				<FloatingToolbarPlugin />
+				<LinkEditorPlugin />
+				<RubyEditorPlugin />
+				<TableHoverActionsPlugin />
+				<TableActionMenuPlugin cellMerge={settings.tableCellMerge} />
+				<TableCellResizerPlugin />
+				<TableScrollShadowPlugin />
+				{settings.fitNestedTables && <TableFitNestedTablePlugin />}
+				<CodeActionMenuPlugin highlighter={settings.codeHighlighter} />
+				<EmojiPickerPlugin />
+				<MentionPlugin />
+				<VariableTypeaheadPlugin />
+				<VariableDetailsPlugin />
+				<AutoEmbedPlugin />
+				{settings.contextMenu === "lexical" ? (
+					<LexicalNodeContextMenu />
+				) : (
+					<ContextMenuPlugin />
+				)}
+				<CommentPlugin />
+				<ExcalidrawPlugin />
+				<InlineImagePlugin />
+				<ComponentPicker>
+					<ParagraphPickerPlugin />
+					<VariablePickerPlugin />
+					<HeadingPickerPlugin />
+					<TablePickerPlugin />
+					<NumberedListPickerPlugin />
+					<BulletedListPickerPlugin />
+					<CheckListPickerPlugin />
+					<QuotePickerPlugin />
+					<CodePickerPlugin />
+					<DividerPickerPlugin />
+					<ColumnsPickerPlugin />
+					<ImagePickerPlugin />
+					<CardPickerPlugin />
+					<CollapsiblePickerPlugin />
+					<DateTimePickerPlugin />
+					<PullQuotePickerPlugin />
+					<ReviewPickerPlugin />
+					<PollPickerPlugin />
+					<PlaygroundPickerPlugin />
+				</ComponentPicker>
+				{settings.markdownShortcuts === "lexical-markdown" && (
+					<MarkdownShortcutPlugin transformers={EDITOR_TRANSFORMERS} />
+				)}
+				<EditorRefPlugin editorRef={exposeEditor} />
+				<LabSettingsSync />
+				<SnapshotPlugin onChange={onChange} />
+			</div>
+			<ActivityBar className="bg-muted/40">
+				<div className="flex items-center gap-3">
+					<CountPlugin />
+					<CaretOffsetStatus />
+					{settings.charLimit !== "off" && (
+						<CharacterLimit
+							charset={settings.charLimit}
+							maxLength={settings.charLimitValue}
+						/>
+					)}
+				</div>
+				<div className="ms-auto flex items-center gap-3">
+					<PlaygroundActions />
+					<SpeechToTextPlugin />
+					<ReadOnlyTogglePlugin />
+					<ShortcutPlugin />
+					<LanguageSelectorPlugin />
+				</div>
+			</ActivityBar>
+			<LabPanels />
+			<Showcase />
+			<LexicalLab />
+		</EditorWrapper>
 	);
 }
 
@@ -133,8 +359,6 @@ export default function Editor({
 					storedJson === null
 						? () => $importMarkdown(initialMarkdown)
 						: JSON.stringify(storedJson),
-				register: (editor) =>
-					registerMarkdownShortcuts(editor, EDITOR_TRANSFORMERS),
 				onError: (error: Error) => {
 					console.error(error);
 				},
@@ -143,90 +367,12 @@ export default function Editor({
 	);
 
 	return (
-		<LexicalExtensionComposer extension={app} contentEditable={null}>
-			<div
-				className="relative flex min-h-[60vh] w-full flex-col overflow-hidden rounded-xl border bg-card shadow-card"
-				data-testid="lexical-editor"
-			>
-				<Toolbar className="sticky top-0 z-10 bg-muted/60">
-					<HistoryToolbarPlugin />
-					<BlockFormatToolbarPlugin />
-					<FontFamilyToolbarPlugin />
-					<FontSizeToolbarPlugin />
-					<ColorToolbarPlugin />
-					<TextFormatToolbarPlugin formats="all" />
-					<LinkToolbarPlugin />
-					<RubyToolbarPlugin />
-					<ElementFormatToolbarPlugin formats="basic" />
-					<IndentToolbarPlugin />
-					<BlockInsert>
-						<InsertCodeBlockPlugin />
-						<InsertColumnsPlugin />
-						<InsertEmojiPlugin />
-						<InsertEquationPlugin />
-						<InsertHorizontalRulePlugin />
-						<InsertImagePlugin />
-						<InsertTablePlugin />
-						<InsertYouTubePlugin />
-						<InsertTwitterPlugin />
-						<InsertFigmaPlugin />
-					</BlockInsert>
-					<FindReplaceToolbarPlugin />
-					<ClearToolbarPlugin />
-					<ImportExportToolbarPlugin transformers={EDITOR_TRANSFORMERS} />
-				</Toolbar>
-				<div className="relative min-w-0 flex-1">
-					<ContentEditable
-						variant="draggable"
-						className="lexical-poc-content min-h-[55vh] text-base leading-7"
-						placeholder={{
-							en: "Type “/” for blocks, “@” to mention, “{{” for a variable…",
-						}}
-					/>
-					<DraggableBlockPlugin />
-					<FloatingToolbarPlugin />
-					<LinkEditorPlugin />
-					<RubyEditorPlugin />
-					<TableHoverActionsPlugin />
-					<EmojiPickerPlugin />
-					<MentionPlugin />
-					<VariableTypeaheadPlugin />
-					<AutoEmbedPlugin />
-					<ContextMenuPlugin />
-					<ComponentPicker>
-						<ParagraphPickerPlugin />
-						<VariablePickerPlugin />
-						<HeadingPickerPlugin />
-						<TablePickerPlugin />
-						<NumberedListPickerPlugin />
-						<BulletedListPickerPlugin />
-						<CheckListPickerPlugin />
-						<QuotePickerPlugin />
-						<CodePickerPlugin />
-						<DividerPickerPlugin />
-						<ColumnsPickerPlugin />
-						<ImagePickerPlugin />
-						<CardPickerPlugin />
-						<CollapsiblePickerPlugin />
-						<DateTimePickerPlugin />
-						<PullQuotePickerPlugin />
-						<ReviewPickerPlugin />
-						<PollPickerPlugin />
-					</ComponentPicker>
-					<SnapshotPlugin onChange={onChange} />
-				</div>
-				<ActivityBar className="bg-muted/40">
-					<div className="flex items-center gap-3">
-						<CountPlugin />
-					</div>
-					<div className="ms-auto flex items-center gap-3">
-						<SpeechToTextPlugin />
-						<ReadOnlyTogglePlugin />
-						<ShortcutPlugin />
-					</div>
-				</ActivityBar>
-				<Showcase />
-			</div>
-		</LexicalExtensionComposer>
+		<LanguageProvider>
+			<LabSettingsProvider>
+				<LexicalExtensionComposer extension={app} contentEditable={null}>
+					<EditorBody onChange={onChange} />
+				</LexicalExtensionComposer>
+			</LabSettingsProvider>
+		</LanguageProvider>
 	);
 }

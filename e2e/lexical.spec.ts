@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
-const editor = (page: Page) =>
-	page.locator('[data-testid="lexical-editor"] [contenteditable="true"]');
+/** The main ContentEditable (sticky notes and lab demos add other editors). */
+const editor = (page: Page) => page.getByTestId("lexical-content");
 
 /** Collects console errors / hydration warnings; network failures for third-party
  * assets (e.g. Google Fonts behind a proxy) are environment noise and ignored. */
@@ -30,8 +30,30 @@ async function open(page: Page) {
 }
 
 async function caretAtEnd(page: Page) {
-	await editor(page).click();
+	// Click the last paragraph (not the middle of the document) so the caret is
+	// already near the end before Ctrl/Cmd+End.
+	await editor(page).locator("p").last().click();
 	await page.keyboard.press("ControlOrMeta+End");
+}
+
+/** The current document as Lexical JSON (EditorRefPlugin exposes the editor). */
+function documentJson(page: Page) {
+	return page.evaluate(() =>
+		JSON.stringify(
+			(
+				window as unknown as {
+					__lexicalPocEditor: { getEditorState(): { toJSON(): unknown } };
+				}
+			).__lexicalPocEditor
+				.getEditorState()
+				.toJSON(),
+		),
+	);
+}
+
+async function openLab(page: Page) {
+	await page.getByTestId("lexical-lab").locator("summary").click();
+	await expect(page.getByTestId("lab-settings")).toBeVisible();
 }
 
 test.describe("Lexical editor", () => {
@@ -142,6 +164,8 @@ test.describe("Lexical editor", () => {
 	test("reset restores the sample", async ({ page }) => {
 		await open(page);
 		await editor(page).click();
+		// SelectBlockExtension: the first Ctrl/Cmd+A selects the block, the second all.
+		await page.keyboard.press("ControlOrMeta+a");
 		await page.keyboard.press("ControlOrMeta+a");
 		await page.keyboard.press("Backspace");
 		await page.keyboard.type("scratch");
@@ -149,5 +173,148 @@ test.describe("Lexical editor", () => {
 		await page.getByTestId("reset").click();
 		await expect(editor(page)).toContainText("ใบเสนอราคา");
 		await expect(editor(page)).not.toContainText("scratch");
+	});
+});
+
+test.describe("Lexical tools", () => {
+	test("hashtags and keywords become text entities", async ({ page }) => {
+		await open(page);
+		await caretAtEnd(page);
+		await page.keyboard.press("Enter");
+		await page.keyboard.type("Launch #release and congrats team ");
+		await expect(editor(page).locator(".editor-keyword")).toHaveText(
+			"congrats",
+		);
+		const json = await documentJson(page);
+		expect(json).toContain('"type":"hashtag"');
+		expect(json).toContain('"text":"#release"');
+	});
+
+	test("page break inserts a node and round-trips through markdown", async ({
+		page,
+	}) => {
+		await open(page);
+		await caretAtEnd(page);
+		await page.getByTestId("insert-page-break").click();
+		await expect(
+			editor(page).locator("hr[data-lexical-page-break]"),
+		).toHaveCount(1);
+		await page.getByRole("tab", { name: /Markdown/ }).click();
+		await expect(page.getByTestId("preview-markdown")).toContainText(
+			"<!-- pagebreak -->",
+		);
+	});
+
+	test("table action menu inserts a row", async ({ page }) => {
+		await open(page);
+		const rows = editor(page).locator("tr");
+		await expect(rows).toHaveCount(4);
+		await editor(page)
+			.locator("td, th")
+			.filter({ hasText: "Discovery" })
+			.click();
+		await page.getByTestId("table-cell-action-button").click();
+		await expect(page.getByTestId("table-action-menu")).toBeVisible();
+		await page.getByTestId("table-insert-row-below").click();
+		await expect(rows).toHaveCount(5);
+	});
+
+	test("code action menu switches the block language", async ({ page }) => {
+		await open(page);
+		const code = editor(page).locator("code.editor-code");
+		await code.hover();
+		await expect(page.getByTestId("code-action-menu")).toBeVisible();
+		await page.getByLabel("Code language").selectOption("python");
+		await expect(code).toHaveAttribute("data-language", "python");
+	});
+
+	test("sticky note and inline image dialog", async ({ page }) => {
+		await open(page);
+		await caretAtEnd(page);
+		await page.getByTestId("insert-sticky").click();
+		await expect(
+			page.getByTestId("lexical-editor").getByTestId("sticky-note"),
+		).toHaveCount(1);
+		await page.getByTestId("insert-inline-image").click();
+		await expect(page.getByTestId("inline-image-dialog")).toBeVisible();
+		await expect(page.getByTestId("inline-image-confirm")).toBeDisabled();
+	});
+
+	test("special text is opt-in and leaves markdown links alone", async ({
+		page,
+	}) => {
+		await open(page);
+		await openLab(page);
+		await page.getByTestId("setting-specialText").check();
+		await caretAtEnd(page);
+		await page.keyboard.press("Enter");
+		await page.keyboard.type("Note [draft] and [docs](https://lexical.dev) ");
+		const json = await documentJson(page);
+		expect(json).toContain('"type":"specialText"');
+		expect(json).toContain('"url":"https://lexical.dev"');
+		await page.getByRole("tab", { name: /Markdown/ }).click();
+		await expect(page.getByTestId("preview-markdown")).toContainText(
+			"Note [draft] and [docs](https://lexical.dev)",
+		);
+	});
+
+	test("lab compares @lexical/markdown with @lexical/mdast and headless", async ({
+		page,
+	}) => {
+		await open(page);
+		await openLab(page);
+		await page.getByTestId("run-export-comparison").click();
+		await expect(page.getByTestId("export-mdast")).toContainText(
+			"[@Suda Rakthai](mention:u2)",
+		);
+		await expect(page.getByTestId("export-mdast")).toContainText(
+			"**{{contract_id}}**",
+		);
+		await expect(page.getByTestId("export-headless")).toContainText(
+			'data-type="variable"',
+		);
+	});
+
+	test("markdown source mode converts back without losing chips", async ({
+		page,
+	}) => {
+		await open(page);
+		const chips = editor(page).locator('[data-type="variable"]');
+		const before = await chips.count();
+		await page.getByTestId("action-markdown").click();
+		await expect(editor(page).locator("code.editor-code")).toHaveAttribute(
+			"data-language",
+			"markdown",
+		);
+		await expect(chips).toHaveCount(0);
+		await page.getByTestId("action-markdown").click();
+		await expect(chips).toHaveCount(before);
+		await expect(editor(page).locator("h1")).toContainText("ใบเสนอราคา");
+	});
+
+	test("debug panels: tree view and character limit", async ({ page }) => {
+		await open(page);
+		await openLab(page);
+		await page.getByTestId("setting-treeView").check();
+		await expect(page.getByTestId("tree-view")).toContainText("root");
+		await page.getByTestId("setting-charLimit").selectOption("UTF-16");
+		await expect(page.getByTestId("character-limit")).toHaveText(/^-\d+$/);
+		expect(await documentJson(page)).toContain('"type":"overflow"');
+	});
+
+	test("other editors in the lab: plain text, legacy composer, pages", async ({
+		page,
+	}) => {
+		await open(page);
+		await openLab(page);
+		await expect(page.getByTestId("plain-text-editor")).toContainText(
+			"PlainTextExtension",
+		);
+		await expect(page.getByTestId("legacy-editor")).toContainText(
+			"Legacy plugin API",
+		);
+		await expect(
+			page.getByTestId("pages-editor").locator(".lexical-page"),
+		).not.toHaveCount(0);
 	});
 });
