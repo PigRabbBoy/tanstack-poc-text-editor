@@ -9,6 +9,8 @@ const config = defineConfig({
 	// Lets parallel dev servers keep separate dependency caches.
 	cacheDir: process.env.VITE_CACHE_DIR,
 	resolve: { tsconfigPaths: true },
+	// scripts/bundle-sizes.mjs reads the client manifest to measure each editor route.
+	environments: { client: { build: { manifest: true } } },
 	plugins: [
 		devtools(),
 		cloudflare({ viteEnvironment: { name: "ssr" } }),

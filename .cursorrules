@@ -1,7 +1,1 @@
-# shadcn instructions
-
-Use the latest version of Shadcn to install new components, like this command to add a button component:
-
-```bash
-pnpm dlx shadcn@latest add button
-```
+Follow CLAUDE.md at the repo root (commands, layout, conventions). Agent skills live in .agents/skills/.

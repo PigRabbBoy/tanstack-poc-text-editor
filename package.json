@@ -17,7 +17,8 @@
 		"e2e": "playwright test",
 		"verify": "pnpm check && pnpm typecheck && pnpm test",
 		"deploy": "pnpm run build && wrangler deploy",
-		"prepare": "lefthook install || true"
+		"prepare": "lefthook install || true",
+		"bundle-sizes": "vite build && node scripts/bundle-sizes.mjs && biome format --write src/data/bundle-sizes.ts"
 	},
 	"dependencies": {
 		"@ariakit/react": "^0.4.40",

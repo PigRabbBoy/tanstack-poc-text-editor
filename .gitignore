@@ -25,3 +25,6 @@ blob-report
 .env.*
 !.env.example
 .dev.vars
+
+# Agent worktrees
+.claude/worktrees

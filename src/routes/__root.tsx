@@ -6,6 +6,7 @@ import {
 	Scripts,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import appCss from "../styles.css?url";
@@ -80,6 +81,14 @@ function Header() {
 	);
 }
 
+/** Lets e2e tests wait until React has hydrated before interacting. */
+function HydrationMarker() {
+	useEffect(() => {
+		document.documentElement.dataset.hydrated = "true";
+	}, []);
+	return null;
+}
+
 function RootDocument({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="th">
@@ -92,6 +101,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 					<main>{children}</main>
 				</TooltipProvider>
 				<Toaster />
+				<HydrationMarker />
 				{import.meta.env.DEV && (
 					<TanStackDevtools
 						config={{ position: "bottom-right" }}

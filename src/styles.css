@@ -104,6 +104,9 @@
 	--color-bml-lavender: var(--bml-lavender);
 	--color-bml-success: var(--bml-success);
 	--color-bml-warning: var(--bml-warning);
+	/* Darkened status hues for text on tinted badges (≥4.5:1). */
+	--color-success-text: #00684e;
+	--color-warning-text: #9a4a1c;
 
 	/* BML is deliberately sharp: buttons 2px, inputs 4px, cards 8px. */
 	--radius-sm: 2px;
