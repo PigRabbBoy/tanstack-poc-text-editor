@@ -14,7 +14,12 @@ import {
 	ComboboxList,
 } from "@/editors/lexical/ui/combobox";
 
+// POC: Boonmee Lab families first; "Work Sans" is what unstyled text inherits.
 const FONT_FAMILIES = [
+	"Work Sans",
+	"Poppins",
+	"Montserrat",
+	"Anuphan",
 	"Arial",
 	"Courier New",
 	"Georgia",

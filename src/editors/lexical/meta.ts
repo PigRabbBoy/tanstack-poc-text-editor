@@ -74,7 +74,7 @@ export const meta: EditorMeta = {
 		"floating-toolbar": { status: "kit" },
 		"fixed-toolbar": {
 			status: "kit",
-			note: "Many buttons: scrolls horizontally inside the column.",
+			note: "Many buttons; the registry scrolls them sideways, so the POC wraps them onto extra rows.",
 		},
 		"markdown-shortcuts": {
 			status: "builtin",
