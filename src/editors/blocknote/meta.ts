@@ -116,4 +116,5 @@ export const meta: EditorMeta = {
 		"BlockNote logs a console warning on mount because the root viewport meta lacks `interactive-widget=resizes-content` (a shared __root.tsx change). Resizing or uploading an image can trigger a benign 'ResizeObserver loop' error in the dev overlay.",
 		"Columns (xl-multi-column), PDF/DOCX/ODT export (xl-*-exporter) and AI (xl-ai) are GPL or commercial, so they are not used here.",
 	],
+	inventory: [],
 };

@@ -19,6 +19,7 @@ import type { EditorModule, Snapshot } from "@/editors/types";
 import { useStoredValue } from "@/lib/storage";
 import { useDebouncedCallback } from "@/lib/use-debounced-callback";
 import { PreviewPanel } from "./preview-panel";
+import { ToolInventory } from "./tool-inventory";
 
 type Source =
 	| { kind: "stored"; json: unknown }
@@ -227,6 +228,7 @@ export function EditorPage({ module }: { module: EditorModule }) {
 						)}
 					</ClientOnly>
 				</div>
+				<ToolInventory meta={meta} />
 			</section>
 			<section className="flex min-h-[60vh] min-w-0 flex-col lg:sticky lg:top-20 lg:h-[calc(100vh-6rem)]">
 				<PreviewPanel snapshot={snapshot} Rendered={Rendered} />

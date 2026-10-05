@@ -139,4 +139,5 @@ export const meta: EditorMeta = {
 		"Speech-to-text uses the browser Web Speech API (free, but Chrome sends audio to Google); kept, disabled when unsupported.",
 		"`pnpm typecheck` runs `tsr generate`, which rewrites src/routeTree.gen.ts without the Start Register block (differs from the Vite plugin output).",
 	],
+	inventory: [],
 };

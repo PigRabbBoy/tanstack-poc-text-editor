@@ -157,4 +157,5 @@ export const meta: EditorMeta = {
 		"TableOfContents writes id / data-toc-id attributes into headings, so they show up in the JSON and HTML exports.",
 		"Typography auto-replace changes what users typed (quotes, dashes), which then shows in the markdown export.",
 	],
+	inventory: [],
 };

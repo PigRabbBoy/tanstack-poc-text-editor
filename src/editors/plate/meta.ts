@@ -151,4 +151,5 @@ export const meta: EditorMeta = {
 		"Vitest: @platejs/math imports katex.min.css from its dist, which Node cannot load when vitest externalizes the package — our unit test mocks @platejs/math.",
 		"Types: one registry TS error out of the box (date-node `initialFocus` → `autoFocus` for react-day-picker 10); otherwise strict TS 6 + React 19 clean.",
 	],
+	inventory: [],
 };
