@@ -1,12 +1,23 @@
-import { lazy, Suspense } from "react";
+import { type ComponentType, lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { EditorModule, EditorProps, RenderedProps } from "@/editors/types";
 import { meta } from "./meta";
 
 // BlockNote (and its CSS) is only loaded in the browser: the route module is imported
-// during SSR, and BlockNote is not designed to render on the server.
-const LazyEditor = lazy(() => import("./editor"));
-const LazyRendered = lazy(() => import("./rendered"));
+// during SSR, and BlockNote is not designed to render on the server. The SSR build
+// drops the import() branch (import.meta.env.SSR is a build-time constant), so the
+// editor, its exporters, Mermaid, the PDF fonts… never reach the Worker bundle. The
+// import() must stay inline in the ternary: passed in as a callback it is kept.
+function serverStub<P>() {
+	return Promise.resolve({ default: (() => null) as ComponentType<P> });
+}
+
+const LazyEditor = lazy(() =>
+	import.meta.env.SSR ? serverStub<EditorProps>() : import("./editor"),
+);
+const LazyRendered = lazy(() =>
+	import.meta.env.SSR ? serverStub<RenderedProps>() : import("./rendered"),
+);
 
 function Loading() {
 	return (

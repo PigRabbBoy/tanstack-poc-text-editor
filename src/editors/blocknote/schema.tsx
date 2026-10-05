@@ -1,11 +1,27 @@
+import { syntaxHighlighter } from "@blocknote/code-block";
 import {
 	BlockNoteSchema,
+	createCodeBlockSpec,
 	defaultBlockSpecs,
 	defaultInlineContentSpecs,
+	defaultStyleSpecs,
+	withPageBreak,
 } from "@blocknote/core";
+import { createReactDiagramBlockSpec } from "@blocknote/diagram-block";
+import {
+	createReactInlineMathSpec,
+	createReactMathBlockSpec,
+} from "@blocknote/math-block";
 import { createReactInlineContentSpec } from "@blocknote/react";
+import {
+	multiColumnDropCursor,
+	withMultiColumn,
+} from "@blocknote/xl-multi-column";
 import { findUser } from "@/data/users";
 import { MENTION_HREF_PREFIX } from "@/lib/conventions";
+import { Alert } from "./alert";
+import { CodeLanguageGuard, codeLanguages } from "./code-languages";
+import { Font } from "./font-style";
 
 const chip =
 	"inline-block rounded-sm bg-muted px-1 font-label text-[0.9em] font-medium text-primary-text";
@@ -82,28 +98,42 @@ export const Mention = createReactInlineContentSpec(
 	},
 );
 
-export const schema = BlockNoteSchema.create({
-	// The default code block: no language picker and no highlighting (that needs
-	// `@blocknote/code-block` + shiki). Do NOT pass `supportedLanguages` to
-	// `createCodeBlockSpec` without listing "" too: the "```" shortcut creates
-	// `language: ""`, and any fence language outside the list throws
-	// "Language … is not supported." inside the node view and kills the editor.
-	blockSpecs: defaultBlockSpecs,
-	inlineContentSpecs: {
-		...defaultInlineContentSpecs,
-		variable: Variable,
-		mention: Mention,
-	},
-});
+/**
+ * Every official block BlockNote 0.55 ships, plus ours:
+ * - the default blocks, with the code block configured for @blocknote/code-block's
+ *   Shiki languages (see code-languages.ts for why "" and aliases are guarded);
+ * - page break (core, opt-in via `withPageBreak`);
+ * - math block + inline math (@blocknote/math-block) and the Mermaid diagram block
+ *   (@blocknote/diagram-block);
+ * - columns (@blocknote/xl-multi-column, via `withMultiColumn`);
+ * - the docs' Alert block and Font style (custom block / style examples) and our
+ *   variable / mention chips (custom inline content).
+ */
+export const schema = withMultiColumn(
+	withPageBreak(
+		BlockNoteSchema.create({
+			blockSpecs: {
+				...defaultBlockSpecs,
+				codeBlock: createCodeBlockSpec(codeLanguages),
+				mathBlock: createReactMathBlockSpec(),
+				diagram: createReactDiagramBlockSpec(),
+				alert: Alert(),
+			},
+			inlineContentSpecs: {
+				...defaultInlineContentSpecs,
+				math: createReactInlineMathSpec(),
+				variable: Variable,
+				mention: Mention,
+			},
+			styleSpecs: { ...defaultStyleSpecs, font: Font },
+		}),
+	),
+);
 
 export type AppEditor = typeof schema.BlockNoteEditor;
 export type AppBlock = typeof schema.Block;
 export type AppPartialBlock = typeof schema.PartialBlock;
 
-/**
- * Options shared by the editor, the read-only view and headless tests. Without the
- * `isValidLink` override BlockNote silently drops `mention:` links on markdown/HTML import.
- */
 // Same allowlist as BlockNote's internal `isAllowedUri` (its JSDoc says to import it from
 // `@blocknote/core`, but 0.55 does not export it) plus our `mention:` scheme.
 const ALLOWED_URI =
@@ -115,7 +145,21 @@ export function isValidLink(href: string): boolean {
 	);
 }
 
+/**
+ * Options shared by the editor, the read-only view and headless tests. Without the
+ * `isValidLink` override BlockNote silently drops `mention:` links on markdown/HTML import.
+ */
 export const baseEditorOptions = {
 	schema,
 	links: { isValidLink },
+	// The multi-column drop cursor also shows up beside blocks, to drop into a new column.
+	dropCursor: multiColumnDropCursor,
+	// Advanced tables: merge/split cells, cell colours and header rows/columns.
+	tables: {
+		splitCells: true,
+		cellBackgroundColor: true,
+		cellTextColor: true,
+		headers: true,
+	},
+	extensions: [syntaxHighlighter, CodeLanguageGuard()],
 };

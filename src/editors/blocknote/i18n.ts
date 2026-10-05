@@ -1,4 +1,57 @@
-import { en } from "@blocknote/core/locales";
+import {
+	ar,
+	de,
+	en,
+	es,
+	fa,
+	fr,
+	he,
+	hr,
+	is,
+	it,
+	ja,
+	ko,
+	nl,
+	no,
+	pl,
+	pt,
+	ru,
+	sk,
+	uk,
+	uz,
+	vi,
+	zh,
+	zhTW,
+} from "@blocknote/core/locales";
+import { locales as diagram } from "@blocknote/diagram-block";
+import { locales as math } from "@blocknote/math-block";
+import { locales as multiColumn } from "@blocknote/xl-multi-column";
+
+const core = {
+	ar,
+	de,
+	en,
+	es,
+	fa,
+	fr,
+	he,
+	hr,
+	is,
+	it,
+	ja,
+	ko,
+	nl,
+	no,
+	pl,
+	pt,
+	ru,
+	sk,
+	uk,
+	uz,
+	vi,
+	zh,
+	zhTW,
+} as Record<string, typeof en>;
 
 /**
  * BlockNote ships ~23 UI dictionaries but no Thai one. A dictionary is a plain object,
@@ -55,6 +108,7 @@ const slash: Partial<
 	paragraph: { title: "ย่อหน้า", subtext: "เนื้อหาปกติ", group: "บล็อกพื้นฐาน" },
 	code_block: { title: "โค้ด", subtext: "บล็อกโค้ด", group: "บล็อกพื้นฐาน" },
 	divider: { title: "เส้นคั่น", subtext: "แบ่งส่วนเนื้อหา", group: "บล็อกพื้นฐาน" },
+	page_break: { title: "ขึ้นหน้าใหม่", subtext: "ตัวแบ่งหน้า", group: "ขั้นสูง" },
 	table: { title: "ตาราง", subtext: "ตารางแก้ไขได้", group: "ขั้นสูง" },
 	image: { title: "รูปภาพ", subtext: "รูปภาพพร้อมคำบรรยาย", group: "สื่อ" },
 	video: { title: "วิดีโอ", subtext: "วิดีโอพร้อมคำบรรยาย", group: "สื่อ" },
@@ -75,7 +129,7 @@ const slashMenu = Object.fromEntries(
 	}),
 ) as typeof en.slash_menu;
 
-export const th: typeof en = {
+const th: typeof en = {
 	...en,
 	slash_menu: slashMenu,
 	placeholders: {
@@ -113,20 +167,70 @@ export const th: typeof en = {
 		text_title: "ข้อความ",
 		background_title: "พื้นหลัง",
 	},
+	comments: {
+		...en.comments,
+		save_button_text: "บันทึก",
+		cancel_button_text: "ยกเลิก",
+	},
 };
 
-export const dictionaries = { en, th } as const;
-export type UiLanguage = keyof typeof dictionaries;
+/** Every UI language on this page: BlockNote's own locales plus our Thai override. */
+export const LANGUAGES = [
+	{ id: "en", label: "English" },
+	{ id: "th", label: "ไทย (custom)" },
+	{ id: "ar", label: "العربية" },
+	{ id: "de", label: "Deutsch" },
+	{ id: "es", label: "Español" },
+	{ id: "fa", label: "فارسی" },
+	{ id: "fr", label: "Français" },
+	{ id: "he", label: "עברית" },
+	{ id: "hr", label: "Hrvatski" },
+	{ id: "is", label: "Íslenska" },
+	{ id: "it", label: "Italiano" },
+	{ id: "ja", label: "日本語" },
+	{ id: "ko", label: "한국어" },
+	{ id: "nl", label: "Nederlands" },
+	{ id: "no", label: "Norsk" },
+	{ id: "pl", label: "Polski" },
+	{ id: "pt", label: "Português" },
+	{ id: "ru", label: "Русский" },
+	{ id: "sk", label: "Slovenčina" },
+	{ id: "uk", label: "Українська" },
+	{ id: "uz", label: "Oʻzbek" },
+	{ id: "vi", label: "Tiếng Việt" },
+	{ id: "zh", label: "简体中文" },
+	{ id: "zhTW", label: "繁體中文" },
+] as const;
 
-/** Labels for our own slash items / groups, per UI language. */
-export const customLabels: Record<
-	UiLanguage,
-	{
-		group: string;
-		variable: { title: string; subtext: string };
-		mention: { title: string; subtext: string };
-	}
-> = {
+export type UiLanguage = (typeof LANGUAGES)[number]["id"];
+
+function pick<T>(table: Record<string, T>, id: string, fallback: T): T {
+	return table[id] ?? fallback;
+}
+
+/**
+ * The editor dictionary for one UI language. The optional block packages read their
+ * strings from their own keys (`multi_column`, `math`, `diagram`); a missing locale
+ * falls back to English. Thai only overrides core strings, so its package strings are
+ * English.
+ */
+export function dictionaryFor(language: UiLanguage) {
+	const base = language === "th" ? th : (core[language] ?? en);
+	const packageLanguage = language === "th" ? "en" : language;
+	return {
+		...base,
+		multi_column: pick<typeof multiColumn.en>(
+			multiColumn,
+			packageLanguage,
+			multiColumn.en,
+		),
+		math: pick<typeof math.en>(math, packageLanguage, math.en),
+		diagram: pick<typeof diagram.en>(diagram, packageLanguage, diagram.en),
+	};
+}
+
+/** Labels for our own slash items / groups, per UI language (non-Thai fall back to English). */
+const customLabelTable = {
 	en: {
 		group: "Template",
 		variable: {
@@ -134,10 +238,19 @@ export const customLabels: Record<
 			subtext: "Insert a {{variable}} chip (or type {{)",
 		},
 		mention: { title: "Mention", subtext: "Mention a person (or type @)" },
+		alert: {
+			title: "Alert",
+			subtext: "Warning, error, info or success callout",
+		},
 	},
 	th: {
 		group: "เทมเพลต",
 		variable: { title: "ตัวแปร", subtext: "แทรกตัวแปร {{variable}} (หรือพิมพ์ {{)" },
 		mention: { title: "กล่าวถึง", subtext: "กล่าวถึงบุคคล (หรือพิมพ์ @)" },
+		alert: { title: "กล่องแจ้งเตือน", subtext: "คำเตือน ข้อผิดพลาด ข้อมูล หรือสำเร็จ" },
 	},
 };
+
+export function customLabels(language: UiLanguage) {
+	return language === "th" ? customLabelTable.th : customLabelTable.en;
+}

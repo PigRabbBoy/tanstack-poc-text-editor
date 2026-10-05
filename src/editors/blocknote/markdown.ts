@@ -10,18 +10,23 @@
  *    `mention:id` labelled `@Label` *before* calling BlockNote's serializer, which emits
  *    text verbatim and links as `[text](href)` — so the shared forms come out exactly.
  */
+import { latexToMathMLElement } from "@blocknote/math-block";
 import { findUser } from "@/data/users";
 import {
 	MENTION_HREF_PREFIX,
 	tokenizeInline,
 	variableMarkdown,
 } from "@/lib/conventions";
+import { normalizeCodeBlocks } from "./code-languages";
 import type { AppBlock, AppEditor, AppPartialBlock } from "./schema";
 
 // Block JSON is walked structurally; the schema-typed unions are too deep to narrow usefully here.
 type Json = Record<string, unknown>;
 type Inline = Json & { type: string };
 type InlineMapper = (item: Inline) => Inline[];
+
+/** Blocks whose content is plain source text: `{{x}}` there is literal code, LaTeX or Mermaid. */
+const PLAIN_BLOCKS = new Set(["codeBlock", "mathBlock", "diagram"]);
 
 function isRecord(value: unknown): value is Json {
 	return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -58,9 +63,9 @@ export function mapInlineContent<T>(blocks: T[], mapper: InlineMapper): T[] {
 	return blocks.map((block) => {
 		const source = block as Json;
 		const next: Json = { ...source };
-		// Code blocks hold plain text only; `{{x}}` there is literal code.
-		if (source.type === "codeBlock") return next as T;
-		if (Array.isArray(source.content))
+		if (PLAIN_BLOCKS.has(String(source.type))) {
+			// Plain source text is left alone; nested blocks are still mapped.
+		} else if (Array.isArray(source.content))
 			next.content = mapInlineArray(source.content, mapper);
 		else if (isRecord(source.content) && source.content.type === "tableContent")
 			next.content = mapTableContent(source.content, mapper);
@@ -133,14 +138,77 @@ export function markdownToBlocks(
 	markdown: string,
 ): AppPartialBlock[] {
 	const parsed = editor.tryParseMarkdownToBlocks(markdown);
-	return mapInlineContent(parsed, toCustomInline) as AppPartialBlock[];
+	return normalizeCodeBlocks(
+		mapInlineContent(parsed, toCustomInline),
+	) as AppPartialBlock[];
+}
+
+export function htmlToBlocks(
+	editor: AppEditor,
+	html: string,
+): AppPartialBlock[] {
+	const parsed = editor.tryParseHTMLToBlocks(html);
+	return normalizeCodeBlocks(
+		mapInlineContent(parsed, toCustomInline),
+	) as AppPartialBlock[];
+}
+
+function rendersLatex(latex: string, inline: boolean): boolean {
+	try {
+		return latexToMathMLElement(latex, inline).mathMLElement !== null;
+	} catch {
+		return false;
+	}
+}
+
+function plainText(content: unknown): string {
+	if (typeof content === "string") return content;
+	return textOf({ content });
+}
+
+/**
+ * @blocknote/math-block 0.55 renders no external HTML for empty or invalid LaTeX, and
+ * BlockNote's HTML serializer (which markdown export also uses) then throws reading
+ * `firstChild.classList`. That happens on every keystroke while a formula is typed, so
+ * before exporting, an empty math block is dropped, invalid LaTeX becomes `$$…$$` /
+ * `$…$` text (the markdown notation), and valid math is left to the math package.
+ */
+export function withExportableMath<T>(blocks: T[]): T[] {
+	return blocks.flatMap((block) => {
+		const source = block as Json;
+		const next: Json = { ...source };
+		if (source.type === "mathBlock") {
+			const latex = plainText(source.content);
+			if (!latex.trim()) return [];
+			if (!rendersLatex(latex, false))
+				Object.assign(next, {
+					type: "paragraph",
+					props: {},
+					content: [{ type: "text", text: `$$${latex}$$`, styles: {} }],
+				});
+		} else if (Array.isArray(source.content)) {
+			next.content = source.content.flatMap((item: unknown) =>
+				isRecord(item) &&
+				item.type === "math" &&
+				!rendersLatex(plainText(item.content), true)
+					? [{ type: "text", text: `$${plainText(item.content)}$`, styles: {} }]
+					: [item],
+			);
+		}
+		if (Array.isArray(source.children))
+			next.children = withExportableMath(source.children);
+		return [next as T];
+	});
 }
 
 export function blocksToMarkdown(
 	editor: AppEditor,
 	blocks: AppBlock[] = editor.document,
 ): string {
-	const shared = mapInlineContent(blocks, toSharedInline) as AppPartialBlock[];
+	const shared = mapInlineContent(
+		withExportableMath(blocks),
+		toSharedInline,
+	) as AppPartialBlock[];
 	return editor.blocksToMarkdownLossy(shared);
 }
 
@@ -153,7 +221,9 @@ export function blocksToHtml(
 	editor: AppEditor,
 	blocks: AppBlock[] = editor.document,
 ): string {
-	return cleanExternalHtml(editor.blocksToHTMLLossy(blocks));
+	return cleanExternalHtml(
+		editor.blocksToHTMLLossy(withExportableMath(blocks) as AppPartialBlock[]),
+	);
 }
 
 /**
