@@ -190,7 +190,9 @@ function Overview() {
 					</Table>
 				</div>
 				<p className="text-sm text-muted-foreground">
-					Hover a badge for the note recorded while building that page.
+					Hover a badge for the note recorded while building that page. Route JS
+					is the gzipped JS an editor page loads on top of the app shell (
+					<code>pnpm bundle-sizes</code>).
 				</p>
 			</section>
 
