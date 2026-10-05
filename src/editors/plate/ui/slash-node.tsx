@@ -4,9 +4,13 @@ import * as React from 'react';
 
 import type { PlateEditor, PlateElementProps } from 'platejs/react';
 
-import { AIChatPlugin } from '@platejs/ai/react';
+import { insertImagePlaceholder } from '@platejs/media';
 import {
+  AtSignIcon,
+  BracesIcon,
   CalendarIcon,
+  ImageIcon,
+  MinusIcon,
   ChevronRightIcon,
   Code2,
   Columns3Icon,
@@ -20,7 +24,6 @@ import {
   PilcrowIcon,
   Quote,
   RadicalIcon,
-  SparklesIcon,
   Square,
   SuperscriptIcon,
   Table,
@@ -33,6 +36,7 @@ import {
   insertBlock,
   insertInlineElement,
 } from '@/editors/plate/components/editor/transforms';
+import { openVariablePicker } from '@/editors/plate/variable-kit';
 
 import {
   InlineCombobox,
@@ -59,14 +63,28 @@ type Group = {
 
 const groups: Group[] = [
   {
-    group: 'AI',
+    // POC: template data first — this is what the quotation editor is for.
+    group: 'Template',
     items: [
       {
         focusEditor: false,
-        icon: <SparklesIcon />,
-        value: 'AI',
+        icon: <BracesIcon />,
+        keywords: ['variable', 'placeholder', 'field', '{{'],
+        label: 'Variable',
+        value: 'action_variable',
+        onSelect: (editor) => openVariablePicker(editor),
+      },
+      {
+        focusEditor: false,
+        icon: <AtSignIcon />,
+        keywords: ['mention', 'person', 'user', '@'],
+        label: 'Mention',
+        value: 'action_mention',
         onSelect: (editor) => {
-          editor.getApi(AIChatPlugin).aiChat.show();
+          editor.tf.insertNodes(
+            { type: KEYS.mentionInput, children: [{ text: '' }] },
+            { select: true }
+          );
         },
       },
     ],
@@ -140,6 +158,12 @@ const groups: Group[] = [
         value: KEYS.blockquote,
       },
       {
+        icon: <MinusIcon />,
+        keywords: ['divider', 'separator', 'hr', '---'],
+        label: 'Divider',
+        value: KEYS.hr,
+      },
+      {
         description: 'Insert a highlighted block.',
         icon: <LightbulbIcon />,
         keywords: ['note'],
@@ -152,6 +176,20 @@ const groups: Group[] = [
         insertBlock(editor, value, { upsert: true });
       },
     })),
+  },
+  {
+    group: 'Media',
+    items: [
+      {
+        icon: <ImageIcon />,
+        keywords: ['picture', 'photo', 'img'],
+        label: 'Image',
+        value: KEYS.img,
+        onSelect: (editor) => {
+          insertImagePlaceholder(editor, { select: true });
+        },
+      },
+    ],
   },
   {
     group: 'Advanced blocks',

@@ -14,6 +14,7 @@ import {
   useSelected,
 } from 'platejs/react';
 
+import { USERS } from '@/data/users';
 import { cn } from '@/lib/utils';
 import { useMounted } from '@/editors/plate/hooks/use-mounted';
 import { inlineSuggestionVariants } from '@/editors/plate/lib/suggestion';
@@ -32,7 +33,7 @@ export function MentionElement(
     prefix?: string;
   }
 ) {
-  const { element } = props;
+  const { element, prefix = '@' } = props;
   const selected = useSelected();
   const focused = useFocused();
   const mounted = useMounted();
@@ -41,8 +42,9 @@ export function MentionElement(
   return (
     <PlateElement
       {...props}
+      as="span"
       className={cn(
-        'inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline font-medium text-sm',
+        'inline-block rounded-sm bg-accent px-1.5 py-0.5 align-baseline font-medium text-[0.9em] text-accent-foreground',
         inlineSuggestionVariants(),
         !readOnly && 'cursor-pointer',
         selected && focused && 'ring-2 ring-ring',
@@ -54,6 +56,8 @@ export function MentionElement(
         ...props.attributes,
         contentEditable: false,
         'data-slate-value': element.value,
+        'data-type': 'mention',
+        'data-id': element.key ?? element.value,
         draggable: true,
       }}
     >
@@ -61,13 +65,13 @@ export function MentionElement(
         // Mac OS IME https://github.com/ianstormtaylor/slate/issues/3490
         <>
           {props.children}
-          {props.prefix}
+          {prefix}
           {element.value}
         </>
       ) : (
         // Others like Android https://github.com/ianstormtaylor/slate/pull/5360
         <>
-          {props.prefix}
+          {prefix}
           {element.value}
           {props.children}
         </>
@@ -93,7 +97,7 @@ export function MentionInputElement(
         showTrigger={false}
         trigger="@"
       >
-        <span className="inline-block rounded-md bg-muted px-1.5 py-0.5 align-baseline text-sm ring-ring focus-within:ring-2">
+        <span className="inline-block rounded-sm bg-accent px-1.5 py-0.5 align-baseline text-accent-foreground text-sm ring-ring focus-within:ring-2">
           <InlineComboboxInput />
         </span>
 
@@ -105,9 +109,13 @@ export function MentionInputElement(
               <InlineComboboxItem
                 key={item.key}
                 value={item.text}
+                keywords={[item.role]}
                 onClick={() => onSelectItem(editor, item, search)}
               >
-                {item.text}
+                <span>{item.text}</span>
+                <span className="ml-auto pl-2 text-muted-foreground text-xs">
+                  {item.role}
+                </span>
               </InlineComboboxItem>
             ))}
           </InlineComboboxGroup>
@@ -119,79 +127,8 @@ export function MentionInputElement(
   );
 }
 
-const MENTIONABLES = [
-  { key: '0', text: 'Aayla Secura' },
-  { key: '1', text: 'Adi Gallia' },
-  {
-    key: '2',
-    text: 'Admiral Dodd Rancit',
-  },
-  {
-    key: '3',
-    text: 'Admiral Firmus Piett',
-  },
-  {
-    key: '4',
-    text: 'Admiral Gial Ackbar',
-  },
-  { key: '5', text: 'Admiral Ozzel' },
-  { key: '6', text: 'Admiral Raddus' },
-  {
-    key: '7',
-    text: 'Admiral Terrinald Screed',
-  },
-  { key: '8', text: 'Admiral Trench' },
-  {
-    key: '9',
-    text: 'Admiral U.O. Statura',
-  },
-  { key: '10', text: 'Agen Kolar' },
-  { key: '11', text: 'Agent Kallus' },
-  {
-    key: '12',
-    text: 'Aiolin and Morit Astarte',
-  },
-  { key: '13', text: 'Aks Moe' },
-  { key: '14', text: 'Almec' },
-  { key: '15', text: 'Alton Kastle' },
-  { key: '16', text: 'Amee' },
-  { key: '17', text: 'AP-5' },
-  { key: '18', text: 'Armitage Hux' },
-  { key: '19', text: 'Artoo' },
-  { key: '20', text: 'Arvel Crynyd' },
-  { key: '21', text: 'Asajj Ventress' },
-  { key: '22', text: 'Aurra Sing' },
-  { key: '23', text: 'AZI-3' },
-  { key: '24', text: 'Bala-Tik' },
-  { key: '25', text: 'Barada' },
-  { key: '26', text: 'Bargwill Tomder' },
-  { key: '27', text: 'Baron Papanoida' },
-  { key: '28', text: 'Barriss Offee' },
-  { key: '29', text: 'Baze Malbus' },
-  { key: '30', text: 'Bazine Netal' },
-  { key: '31', text: 'BB-8' },
-  { key: '32', text: 'BB-9E' },
-  { key: '33', text: 'Ben Quadinaros' },
-  { key: '34', text: 'Berch Teller' },
-  { key: '35', text: 'Beru Lars' },
-  { key: '36', text: 'Bib Fortuna' },
-  {
-    key: '37',
-    text: 'Biggs Darklighter',
-  },
-  { key: '38', text: 'Black Krrsantan' },
-  { key: '39', text: 'Bo-Katan Kryze' },
-  { key: '40', text: 'Boba Fett' },
-  { key: '41', text: 'Bobbajo' },
-  { key: '42', text: 'Bodhi Rook' },
-  { key: '43', text: 'Borvo the Hutt' },
-  { key: '44', text: 'Boss Nass' },
-  { key: '45', text: 'Bossk' },
-  {
-    key: '46',
-    text: 'Breha Antilles-Organa',
-  },
-  { key: '47', text: 'Bren Derlin' },
-  { key: '48', text: 'Brendol Hux' },
-  { key: '49', text: 'BT-1' },
-];
+const MENTIONABLES = USERS.map((user) => ({
+  key: user.id,
+  role: user.role,
+  text: user.name,
+}));

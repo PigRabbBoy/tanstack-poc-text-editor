@@ -1,6 +1,7 @@
 "use client";
 
 import { createPlatePlugin } from "platejs/react";
+import { USERS } from "@/data/users";
 import { BlockDiscussion } from "@/editors/plate/ui/block-discussion";
 import type { TComment } from "@/editors/plate/ui/comment";
 
@@ -48,124 +49,30 @@ export const getDiscussionBlockClickTarget = ({
 		target,
 	});
 
-const discussionsData: TDiscussion[] = [
-	{
-		id: "discussion1",
-		comments: [
-			{
-				id: "comment1",
-				contentRich: [
-					{
-						children: [
-							{
-								text: "Comments are a great way to provide feedback and discuss changes.",
-							},
-						],
-						type: "p",
-					},
-				],
-				createdAt: new Date(Date.now() - 600_000),
-				discussionId: "discussion1",
-				isEdited: false,
-				userId: "charlie",
-			},
-			{
-				id: "comment2",
-				contentRich: [
-					{
-						children: [
-							{
-								text: "Agreed! The link to the docs makes it easy to learn more.",
-							},
-						],
-						type: "p",
-					},
-				],
-				createdAt: new Date(Date.now() - 500_000),
-				discussionId: "discussion1",
-				isEdited: false,
-				userId: "bob",
-			},
-		],
-		createdAt: new Date(),
-		documentContent: "comments",
-		isResolved: false,
-		userId: "charlie",
-	},
-	{
-		id: "discussion2",
-		comments: [
-			{
-				id: "comment1",
-				contentRich: [
-					{
-						children: [
-							{
-								text: "Nice demonstration of overlapping annotations with both comments and suggestions!",
-							},
-						],
-						type: "p",
-					},
-				],
-				createdAt: new Date(Date.now() - 300_000),
-				discussionId: "discussion2",
-				isEdited: false,
-				userId: "bob",
-			},
-			{
-				id: "comment2",
-				contentRich: [
-					{
-						children: [
-							{
-								text: "This helps users understand how powerful the editor can be.",
-							},
-						],
-						type: "p",
-					},
-				],
-				createdAt: new Date(Date.now() - 200_000),
-				discussionId: "discussion2",
-				isEdited: false,
-				userId: "charlie",
-			},
-		],
-		createdAt: new Date(),
-		documentContent: "overlapping",
-		isResolved: false,
-		userId: "bob",
-	},
-];
+// POC: no backend and no collaboration — discussions live in plugin options
+// (in memory) and the "users" are the shared mention list.
+const discussionsData: TDiscussion[] = [];
 
-const avatarUrl = (seed: string) =>
-	`https://api.dicebear.com/9.x/glass/svg?seed=${seed}`;
+const avatarUrl = (name: string) =>
+	`data:image/svg+xml;utf8,${encodeURIComponent(
+		`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" fill="#f3eefb"/><text x="16" y="21" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#c2185b">${name.slice(0, 1)}</text></svg>`,
+	)}`;
 
 const usersData: Record<
 	string,
 	{ id: string; avatarUrl: string; name: string; hue?: number }
-> = {
-	alice: {
-		id: "alice",
-		avatarUrl: avatarUrl("alice6"),
-		name: "Alice",
-	},
-	bob: {
-		id: "bob",
-		avatarUrl: avatarUrl("bob4"),
-		name: "Bob",
-	},
-	charlie: {
-		id: "charlie",
-		avatarUrl: avatarUrl("charlie2"),
-		name: "Charlie",
-	},
-};
+> = Object.fromEntries(
+	USERS.map((user) => [
+		user.id,
+		{ id: user.id, avatarUrl: avatarUrl(user.name), name: user.name },
+	]),
+);
 
 // This plugin is purely UI. It's only used to store the discussions and users data
 export const discussionPlugin = createPlatePlugin({
 	key: "discussion",
 	options: {
-		currentUserId: "alice",
+		currentUserId: "u3",
 		discussions: discussionsData,
 		users: usersData,
 	},

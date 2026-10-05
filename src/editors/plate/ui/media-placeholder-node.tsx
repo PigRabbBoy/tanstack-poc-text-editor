@@ -55,8 +55,14 @@ export const PlaceholderElement = withHOC(
 
     const { api } = useEditorPlugin(PlaceholderPlugin);
 
-    const { isUploading, progress, uploadedFile, uploadFile, uploadingFile } =
-      useUploadFile();
+    const {
+      error: uploadError,
+      isUploading,
+      progress,
+      uploadedFile,
+      uploadFile,
+      uploadingFile,
+    } = useUploadFile();
 
     const loading = isUploading && uploadingFile;
 
@@ -116,6 +122,22 @@ export const PlaceholderElement = withHOC(
       api.placeholder.removeUploadingFile(element.id as string);
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [uploadedFile, element.id]);
+
+    // POC: a rejected file (e.g. > 1 MB) removes its placeholder again.
+    React.useEffect(() => {
+      if (!uploadError) return;
+
+      const path = editor.api.findPath(element);
+
+      if (path) {
+        editor.tf.withoutSaving(() => {
+          editor.tf.removeNodes({ at: path });
+        });
+      }
+
+      api.placeholder.removeUploadingFile(element.id as string);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [uploadError]);
 
     // React dev mode will call React.useEffect twice
     const isReplaced = React.useRef(false);

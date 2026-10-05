@@ -29,19 +29,17 @@ export const BlockListStatic: RenderStaticNodeWrapper = (props) => {
 };
 
 function List(props: SlateRenderElementProps) {
-  const { indent, listStart, listStyleType } = props.element as TListElement & {
-    indent?: number;
-  };
+  const { listStart, listStyleType } = props.element as TListElement;
   const { Li, Marker } = config[listStyleType] ?? {};
   const List = isOrderedList(props.element) ? 'ol' : 'ul';
 
-  // Apply margin-left for indent (24px per level) for DOCX export compatibility
-  const marginLeft = indent ? `${indent * 24}px` : undefined;
-
+  // POC: the registry adds `margin-left: indent * 24px` here "for DOCX export",
+  // but the indent plugin already indents the block, so static ordered lists
+  // were indented twice. DOCX export is not used on this page.
   return (
     <List
       className="relative m-0 p-0"
-      style={{ listStyleType, marginLeft }}
+      style={{ listStyleType }}
       start={listStart}
     >
       {Marker && <Marker {...props} />}

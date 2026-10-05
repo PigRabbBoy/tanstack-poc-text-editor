@@ -3,6 +3,7 @@ import { BaseBasicBlocksKit } from "./plugins/basic-blocks-base-kit";
 import { BaseBasicMarksKit } from "./plugins/basic-marks-base-kit";
 import { BaseCalloutKit } from "./plugins/callout-base-kit";
 import { BaseCodeBlockKit } from "./plugins/code-block-base-kit";
+import { BaseCodeDrawingKit } from "./plugins/code-drawing-base-kit";
 import { BaseColumnKit } from "./plugins/column-base-kit";
 import { BaseCommentKit } from "./plugins/comment-base-kit";
 import { BaseDateKit } from "./plugins/date-base-kit";
@@ -19,6 +20,7 @@ import { BaseSuggestionKit } from "./plugins/suggestion-base-kit";
 import { BaseTableKit } from "./plugins/table-base-kit";
 import { BaseTocKit } from "./plugins/toc-base-kit";
 import { BaseToggleKit } from "./plugins/toggle-base-kit";
+import { BaseVariableKit } from "@/editors/plate/variable-node-static";
 
 export const BaseEditorKit = [
 	...BaseBasicBlocksKit,
@@ -33,6 +35,8 @@ export const BaseEditorKit = [
 	...BaseDateKit,
 	...BaseLinkKit,
 	...BaseMentionKit,
+	...BaseVariableKit,
+	...BaseCodeDrawingKit,
 	...BaseBasicMarksKit,
 	...BaseFontKit,
 	...BaseListKit,
